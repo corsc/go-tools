@@ -1,0 +1,4 @@
+/package-coverage/acc.out
+/package-coverage/package-coverage
+*.iml
+.idea/*
