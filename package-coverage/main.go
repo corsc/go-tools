@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"sort"
+
+	"sage42.org/go-tools/package-coverage/generator"
+	"sage42.org/go-tools/package-coverage/utils"
 )
 
 func main() {
@@ -14,61 +15,32 @@ func main() {
 		}
 	}()
 
-	filename := getFilename()
-
-	contents := getFileContents(filename)
-
-	coverageData := parseLines(contents)
-
-	pkgs := getSortedPackages(coverageData)
-
-	printCoverage(pkgs, coverageData)
-}
-
-func getFilename() string {
+	verbose := false
+	coverage := false
+	clean := false
+	flag.BoolVar(&verbose, "v", false, "verbose mode")
+	flag.BoolVar(&coverage, "c", false, "generate coverage")
+	flag.BoolVar(&clean, "d", false, "clean")
 	flag.Parse()
 
-	filename := flag.Arg(0)
-	if filename == "" {
-		panic("Usage: package-coverage coverage.out")
+	if !verbose {
+		utils.VerboseOff()
 	}
 
-	return filename
+	path := getPath()
+	if coverage {
+		generator.Coverage(path)
+	}
+
+	if clean {
+		generator.Clean(path)
+	}
 }
 
-func getFileContents(filename string) string {
-	contents, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
+func getPath() string {
+	path := flag.Arg(0)
+	if path == "" {
+		panic("Usage: package-coverage ./")
 	}
-
-	return string(contents)
-}
-
-func getSortedPackages(coverageData map[string]*coverage) []string {
-	output := []string{}
-
-	for pkg := range coverageData {
-		output = append(output, pkg)
-	}
-
-	sort.Strings(output)
-
-	return output
-}
-
-func printCoverage(pkgs []string, coverageData map[string]*coverage) {
-	fmt.Printf("  %%		Statements	Package\n")
-
-	for _, pkg := range pkgs {
-		cover := coverageData[pkg]
-
-		stmts := float64(cover.selfStatements + cover.childStatements)
-		stmtsCovered := float64(cover.selfCovered + cover.childCovered)
-
-		covered := (stmtsCovered / stmts) * 100
-
-		fmt.Printf("%2.2f		%5.0f		%s\n", covered, stmts, pkg)
-	}
-	fmt.Println()
+	return path
 }
