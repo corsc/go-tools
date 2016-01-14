@@ -10,7 +10,7 @@ import (
 // Clean will search the supplied directory and any sub-directories that contain Go files and remove any
 // existing coverage files
 func Clean(basePath string) {
-	paths, err := findAllGoDirs(basePath)
+	paths, err := utils.FindAllGoDirs(basePath)
 	if err != nil {
 		return
 	}

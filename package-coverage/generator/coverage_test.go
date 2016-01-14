@@ -8,6 +8,7 @@ import (
 	"log"
 
 	"github.com/stretchr/testify/assert"
+	"sage42.org/go-tools/package-coverage/utils"
 )
 
 func init() {
@@ -18,7 +19,7 @@ func init() {
 func TestGenerateCoverage_HappyPath(t *testing.T) {
 	defer restoreExecCoverage(mockExecCoverage())
 
-	path := getCurrentDir()
+	path := utils.GetCurrentDir()
 	expected := path + "generator.cov"
 
 	result := generateCoverage(path)
@@ -26,7 +27,7 @@ func TestGenerateCoverage_HappyPath(t *testing.T) {
 }
 
 func TestAddFakeTest_HappyPath(t *testing.T) {
-	path := getCurrentDir()
+	path := utils.GetCurrentDir()
 	packageName := "generator"
 	expectedFilename := path + fakeTestFilename
 	defer removeTestFile(expectedFilename)
@@ -38,7 +39,7 @@ func TestAddFakeTest_HappyPath(t *testing.T) {
 }
 
 func TestCreateTestFilename(t *testing.T) {
-	path := getCurrentDir() + "generator/"
+	path := utils.GetCurrentDir() + "generator/"
 	expected := path + fakeTestFilename
 
 	result := createTestFilename(path)
@@ -46,7 +47,7 @@ func TestCreateTestFilename(t *testing.T) {
 }
 
 func TestExtractPackageName(t *testing.T) {
-	path := getCurrentDir()
+	path := utils.GetCurrentDir()
 	expected := "generator"
 
 	result := findPackageName(path)
@@ -55,7 +56,7 @@ func TestExtractPackageName(t *testing.T) {
 
 func TestCreateTestFile(t *testing.T) {
 	packageName := "mypackage"
-	testFile := getCurrentDir() + "my_test.go"
+	testFile := utils.GetCurrentDir() + "my_test.go"
 
 	defer removeTestFile(testFile)
 
@@ -68,7 +69,7 @@ func TestCreateTestFile(t *testing.T) {
 
 func TestRemoveFakeTest(t *testing.T) {
 	packageName := "mypackage"
-	testFile := getCurrentDir() + "my_test.go"
+	testFile := utils.GetCurrentDir() + "my_test.go"
 
 	createTestFile(packageName, testFile)
 	removeFakeTest(testFile)

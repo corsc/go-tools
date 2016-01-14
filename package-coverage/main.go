@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sage42.org/go-tools/package-coverage/generator"
+	"sage42.org/go-tools/package-coverage/parser"
 	"sage42.org/go-tools/package-coverage/utils"
 )
 
@@ -18,9 +19,12 @@ func main() {
 	verbose := false
 	coverage := false
 	clean := false
+	print := false
+
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&clean, "d", false, "clean")
+	flag.BoolVar(&print, "p", false, "print coverage to stdout")
 	flag.Parse()
 
 	if !verbose {
@@ -34,6 +38,10 @@ func main() {
 
 	if clean {
 		generator.Clean(path)
+	}
+
+	if print {
+		parser.PrintCoverage(path)
 	}
 }
 

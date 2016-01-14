@@ -1,4 +1,4 @@
-package generator
+package utils
 
 import (
 	"testing"
@@ -9,9 +9,9 @@ import (
 )
 
 func TestFindAllGoDirs(t *testing.T) {
-	dir := strings.TrimSuffix(getCurrentDir(), "package-coverage/generator/")
+	dir := strings.TrimSuffix(GetCurrentDir(), "package-coverage/utils/")
 
-	path := "../../"
+	path := "../"
 	expected := []string{
 		dir + "package-coverage/",
 		dir + "package-coverage/generator/",
@@ -19,7 +19,7 @@ func TestFindAllGoDirs(t *testing.T) {
 		dir + "package-coverage/utils/",
 	}
 
-	results, err := findAllGoDirs(path)
+	results, err := FindAllGoDirs(path)
 
 	assert.Nil(t, err)
 	assert.Equal(t, expected, results)
