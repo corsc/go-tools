@@ -1,4 +1,4 @@
-package main
+package parser
 
 import (
 	"log"
@@ -82,6 +82,7 @@ func processSelfCoverage(cover *coverage, fragment fragment) {
 	}
 }
 
+// TODO: make this more efficient
 func updateChildCoverage(output map[string]*coverage) {
 	for pkgOuter, coverageOuter := range output {
 		for pkgInner, coverageInner := range output {

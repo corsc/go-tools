@@ -1,14 +1,17 @@
 This tool intents to calculate the test coverage of a particular package (including any sub packages).
 
-To use this tool first run the "coverage.sh" script in the base go package that you want to calculate coverage for.
+## Commands:
 
-Once this is complete there should be an acc.out file created in the directory the command was run.
+* `$ package-coverage -c ./` will generate coverage.  1 coverage file (*.cov) per package
+* `$ package-coverage -d ./` will remove any previous coverage files (will remove all *.cov files)
+* `$ package-coverage -p ./` will import all coverage files under the supplied dir and output the summary.
+* `$ package-coverage -c -p -d ./` all of the above
 
-Then you can run:
-    $ ./package-coverage acc.out
-
-You should receive an output similar to:
-
-       %		Statements	Package
-     63.22		   87		sage42.org/go-tools/
-     63.22		   87		sage42.org/go-tools/package-coverage/
+## Output Sample
+```
+  %		Statements	Package
+50.00		  240	sage42.org/go-tools/package-coverage/
+42.47		   73	sage42.org/go-tools/package-coverage/generator/
+65.52		   87	sage42.org/go-tools/package-coverage/parser/
+58.18		   55	sage42.org/go-tools/package-coverage/utils/
+```
