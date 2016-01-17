@@ -36,19 +36,19 @@ func main() {
 		generator.Coverage(path)
 	}
 
-	if clean {
-		generator.Clean(path)
-	}
-
 	if print {
 		parser.PrintCoverage(path)
+	}
+
+	if clean {
+		generator.Clean(path)
 	}
 }
 
 func getPath() string {
 	path := flag.Arg(0)
 	if path == "" {
-		panic("Usage: package-coverage ./")
+		panic("Please include a directory as the last argument")
 	}
 	return path
 }

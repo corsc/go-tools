@@ -4,11 +4,6 @@ clear
 
 gometalinter                            \
     --cyclo-over=10                     \
-    --exclude='lua|mrbgenerated|config'  \
-    --exclude='ffjson|thrift'           \
-    --exclude='paysi'                   \
-    --severity=gocyclo:INFO             \
-    --severity=dupl:INFO                \
     --disable-all                       \
     --enable=gofmt                      \
     --enable=goimports                  \
