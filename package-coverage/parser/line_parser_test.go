@@ -7,9 +7,9 @@ import (
 )
 
 func TestParseLine(t *testing.T) {
-	in := "sage42.org/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
+	in := "github.com/corsc/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
 	expected := fragment{
-		pkg:        "sage42.org/go-tools/package-coverage/",
+		pkg:        "github.com/corsc/go-tools/package-coverage/",
 		statements: 1,
 		covered:    false,
 	}
@@ -19,8 +19,8 @@ func TestParseLine(t *testing.T) {
 }
 
 func TestExtractPackage_HappyPath(t *testing.T) {
-	in := "sage42.org/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
-	expected := "sage42.org/go-tools/package-coverage/"
+	in := "github.com/corsc/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
+	expected := "github.com/corsc/go-tools/package-coverage/"
 
 	result := extractPackage(in)
 	assert.Equal(t, expected, result)
@@ -35,7 +35,7 @@ func TestExtractPackage_InvalidLinePanic(t *testing.T) {
 }
 
 func TestExtractNumbers_HappyPath(t *testing.T) {
-	in := "sage42.org/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
+	in := "github.com/corsc/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
 	expectedStatements := 1
 	expectedCovered := false
 

@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"sage42.org/go-tools/package-coverage/utils"
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // Clean will search the supplied directory and any sub-directories that contain Go files and remove any

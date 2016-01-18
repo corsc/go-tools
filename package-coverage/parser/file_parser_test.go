@@ -8,12 +8,12 @@ import (
 
 func TestParseLines_OnePackage(t *testing.T) {
 	in := `mode: set
-sage42.org/go-tools/package-coverage/file_parser.go:13.49,15.2 1 0
-sage42.org/go-tools/package-coverage/line_parser.go:15.37,23.2 3 1
-sage42.org/go-tools/package-coverage/line_parser.go:25.40,27.21 2 1
+github.com/corsc/go-tools/package-coverage/file_parser.go:13.49,15.2 1 0
+github.com/corsc/go-tools/package-coverage/line_parser.go:15.37,23.2 3 1
+github.com/corsc/go-tools/package-coverage/line_parser.go:25.40,27.21 2 1
 `
 	expected := map[string]*coverage{
-		"sage42.org/go-tools/package-coverage/": {
+		"github.com/corsc/go-tools/package-coverage/": {
 			selfStatements: 6,
 			selfCovered:    5,
 		},
@@ -25,15 +25,15 @@ sage42.org/go-tools/package-coverage/line_parser.go:25.40,27.21 2 1
 
 func TestParseLines_TwoPackages(t *testing.T) {
 	in := `mode: set
-sage42.org/go-tools/package-coverage/file_parser.go:13.49,15.2 1 0
-sage42.org/go-tools/some-other-package/something.go:25.40,27.21 2 1
+github.com/corsc/go-tools/package-coverage/file_parser.go:13.49,15.2 1 0
+github.com/corsc/go-tools/some-other-package/something.go:25.40,27.21 2 1
 `
 	expected := map[string]*coverage{
-		"sage42.org/go-tools/package-coverage/": {
+		"github.com/corsc/go-tools/package-coverage/": {
 			selfStatements: 1,
 			selfCovered:    0,
 		},
-		"sage42.org/go-tools/some-other-package/": {
+		"github.com/corsc/go-tools/some-other-package/": {
 			selfStatements: 2,
 			selfCovered:    2,
 		},
@@ -45,18 +45,18 @@ sage42.org/go-tools/some-other-package/something.go:25.40,27.21 2 1
 
 func TestParseLines_PackageAndChild(t *testing.T) {
 	in := `mode: set
-sage42.org/go-tools/package-coverage/file_parser.go:13.49,15.2 1 1
-sage42.org/go-tools/package-coverage/sub/file_parser.go:13.49,15.2 1 1
-sage42.org/go-tools/package-coverage/sub/other.go:13.49,15.2 1 0
+github.com/corsc/go-tools/package-coverage/file_parser.go:13.49,15.2 1 1
+github.com/corsc/go-tools/package-coverage/sub/file_parser.go:13.49,15.2 1 1
+github.com/corsc/go-tools/package-coverage/sub/other.go:13.49,15.2 1 0
 `
 	expected := map[string]*coverage{
-		"sage42.org/go-tools/package-coverage/": {
+		"github.com/corsc/go-tools/package-coverage/": {
 			selfStatements:  1,
 			selfCovered:     1,
 			childStatements: 2,
 			childCovered:    1,
 		},
-		"sage42.org/go-tools/package-coverage/sub/": {
+		"github.com/corsc/go-tools/package-coverage/sub/": {
 			selfStatements: 2,
 			selfCovered:    1,
 		},
@@ -94,12 +94,12 @@ func TestValidLineFormat(t *testing.T) {
 		},
 		{
 			desc:     "valid line - properly formatted line",
-			input:    "sage42.org/go-tools/package-coverage/line_parser.go:54.38,56.2 1 1",
+			input:    "github.com/corsc/go-tools/package-coverage/line_parser.go:54.38,56.2 1 1",
 			expected: true,
 		},
 		{
 			desc:     "valid line - strange case line",
-			input:    "SaGe42.org/Go-Tools/package-coverage/line_parser.go:54.38,56.2 1 1",
+			input:    "github.com/corsc/go-tools/package-coverage/line_parser.go:54.38,56.2 1 1",
 			expected: true,
 		},
 	}

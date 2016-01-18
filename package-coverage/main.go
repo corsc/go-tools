@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 
-	"sage42.org/go-tools/package-coverage/generator"
-	"sage42.org/go-tools/package-coverage/parser"
-	"sage42.org/go-tools/package-coverage/utils"
+	"github.com/corsc/go-tools/package-coverage/generator"
+	"github.com/corsc/go-tools/package-coverage/parser"
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 func main() {

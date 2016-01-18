@@ -10,8 +10,8 @@ This tool intents to calculate the test coverage of a particular package (includ
 ## Output Sample
 ```
   %		Statements	Package
-50.00		  240	sage42.org/go-tools/package-coverage/
-42.47		   73	sage42.org/go-tools/package-coverage/generator/
-65.52		   87	sage42.org/go-tools/package-coverage/parser/
-58.18		   55	sage42.org/go-tools/package-coverage/utils/
+50.00		  240	github.com/corsc/go-tools/package-coverage/
+42.47		   73	github.com/corsc/go-tools/package-coverage/generator/
+65.52		   87	github.com/corsc/go-tools/package-coverage/parser/
+58.18		   55	github.com/corsc/go-tools/package-coverage/utils/
 ```

@@ -10,7 +10,7 @@ import (
 
 	"bytes"
 
-	"sage42.org/go-tools/package-coverage/utils"
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 var fakeTestFilename = "fake_test.go"

@@ -1,6 +1,6 @@
 package generator
 
-import "sage42.org/go-tools/package-coverage/utils"
+import "github.com/corsc/go-tools/package-coverage/utils"
 
 const UnknownPackage = "unknown"
 

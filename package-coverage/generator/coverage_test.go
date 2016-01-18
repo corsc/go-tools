@@ -7,8 +7,8 @@ import (
 
 	"log"
 
+	"github.com/corsc/go-tools/package-coverage/utils"
 	"github.com/stretchr/testify/assert"
-	"sage42.org/go-tools/package-coverage/utils"
 )
 
 func init() {

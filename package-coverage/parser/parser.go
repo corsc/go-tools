@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"sort"
 
-	"sage42.org/go-tools/package-coverage/utils"
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // CoverageByPackage contains the result of parsing one or more package's coverage file
