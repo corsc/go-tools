@@ -15,3 +15,8 @@ func Coverage(basePath string) {
 		generateCoverage(path)
 	}
 }
+
+// Coverage will generate coverage for the supplied directory (and ignore all sub directories)
+func CoverageSingle(basePath string) {
+	generateCoverage(basePath)
+}

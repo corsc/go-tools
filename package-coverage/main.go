@@ -18,11 +18,13 @@ func main() {
 
 	verbose := false
 	coverage := false
+	singleDir := false
 	clean := false
 	print := false
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
+	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion)")
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
 	flag.Parse()
@@ -33,7 +35,11 @@ func main() {
 
 	path := getPath()
 	if coverage {
-		generator.Coverage(path)
+		if singleDir {
+			generator.CoverageSingle(path)
+		} else {
+			generator.Coverage(path)
+		}
 	}
 
 	if print {
