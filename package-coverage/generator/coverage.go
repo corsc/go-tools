@@ -13,6 +13,8 @@ import (
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
+const coverageFilename = "profile.cov"
+
 var fakeTestFilename = "fake_test.go"
 
 // this function will cause the generation of test coverage for the supplied directory and return the file path of the
@@ -23,13 +25,12 @@ func generateCoverage(path string) string {
 	fakeTestFile := addFakeTest(path, packageName)
 	defer removeFakeTest(fakeTestFile)
 
-	coverageFile := generateCoverageFilename(packageName)
-	err := execCoverage(path, coverageFile)
+	err := execCoverage(path, coverageFilename)
 	if err != nil {
 		return ""
 	}
 
-	completePath := combinePath(path, coverageFile)
+	completePath := combinePath(path, coverageFilename)
 	return completePath
 }
 
@@ -99,10 +100,6 @@ func removeFakeTest(filename string) {
 	if err != nil {
 		log.Printf("error while removing test file @ %s, err: %s", filename, err)
 	}
-}
-
-func generateCoverageFilename(packageName string) string {
-	return packageName + ".cov"
 }
 
 // essentially call `go test` to generate the coverage

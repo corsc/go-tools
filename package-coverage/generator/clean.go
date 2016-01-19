@@ -21,8 +21,7 @@ func Clean(basePath string) {
 }
 
 func clean(path string) {
-	packageName := findPackageName(path)
-	coverageFile := path + generateCoverageFilename(packageName)
+	coverageFile := path + coverageFilename
 	removeCoverageFile(coverageFile)
 }
 

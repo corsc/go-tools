@@ -20,7 +20,7 @@ func TestGenerateCoverage_HappyPath(t *testing.T) {
 	defer restoreExecCoverage(mockExecCoverage())
 
 	path := utils.GetCurrentDir()
-	expected := path + "generator.cov"
+	expected := path + "profile.cov"
 
 	result := generateCoverage(path)
 	assert.Equal(t, expected, result)
