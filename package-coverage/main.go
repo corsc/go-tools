@@ -29,7 +29,7 @@ func main() {
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion)")
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
-	flag.StringVar(&ignoreDirs, "i", "git.*|_.*", "ignore regex specified directory")
+	flag.StringVar(&ignoreDirs, "i", `./\.git.*|./_.*`, "ignore regex specified directory")
 	flag.Parse()
 
 	if !verbose {
