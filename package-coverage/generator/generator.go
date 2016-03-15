@@ -2,6 +2,7 @@ package generator
 
 import "github.com/corsc/go-tools/package-coverage/utils"
 
+// UnknownPackage ...
 const UnknownPackage = "unknown"
 
 // Coverage will generate coverage for the supplied directory and any sub-directories that contain Go files
@@ -16,7 +17,7 @@ func Coverage(basePath string) {
 	}
 }
 
-// Coverage will generate coverage for the supplied directory (and ignore all sub directories)
+// CoverageSingle will generate coverage for the supplied directory (and ignore all sub directories)
 func CoverageSingle(basePath string) {
 	generateCoverage(basePath)
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"regexp"
 
 	"github.com/corsc/go-tools/package-coverage/generator"
 	"github.com/corsc/go-tools/package-coverage/parser"
@@ -21,12 +22,14 @@ func main() {
 	singleDir := false
 	clean := false
 	print := false
+	ignoreDirs := ""
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion)")
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
+	flag.StringVar(&ignoreDirs, "i", "git.*|_.*", "ignore regex specified directory")
 	flag.Parse()
 
 	if !verbose {
@@ -34,6 +37,13 @@ func main() {
 	}
 
 	path := getPath()
+
+	if ignoreDirs != "" {
+		if matched, _ := regexp.MatchString(ignoreDirs, path); matched {
+			return
+		}
+	}
+
 	if coverage {
 		if singleDir {
 			generator.CoverageSingle(path)

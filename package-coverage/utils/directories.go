@@ -20,7 +20,7 @@ func FindAllGoDirs(basePath string) ([]string, error) {
 	return finder(basePath, goFiles)
 }
 
-// FindDirs will find all directories below the supplied one
+// FindAllCoverageFiles will find all directories below the supplied one
 func FindAllCoverageFiles(basePath string) ([]string, error) {
 	return finder(basePath, coverageFiles)
 }
@@ -33,7 +33,7 @@ func finder(basePath string, searchFor mode) ([]string, error) {
 		return nil, err
 	}
 
-	filepath.Walk("./", func(path string, finfo os.FileInfo, err error) error {
+	_ = filepath.Walk("./", func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {
 			log.Printf("failed to check path '%s' with error %s", path, err)
 			return nil
