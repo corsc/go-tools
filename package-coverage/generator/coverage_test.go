@@ -16,16 +16,6 @@ func init() {
 	fakeTestFilename = "my-fake-test.go"
 }
 
-func TestGenerateCoverage_HappyPath(t *testing.T) {
-	defer restoreExecCoverage(mockExecCoverage())
-
-	path := utils.GetCurrentDir()
-	expected := path + "profile.cov"
-
-	result := generateCoverage(path)
-	assert.Equal(t, expected, result)
-}
-
 func TestAddFakeTest_HappyPath(t *testing.T) {
 	path := utils.GetCurrentDir()
 	packageName := "generator"

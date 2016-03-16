@@ -4,20 +4,15 @@ import (
 	"log"
 	"os"
 
+	"regexp"
+
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // Clean will search the supplied directory and any sub-directories that contain Go files and remove any
 // existing coverage files
-func Clean(basePath string) {
-	paths, err := utils.FindAllGoDirs(basePath)
-	if err != nil {
-		return
-	}
-
-	for _, path := range paths {
-		clean(path)
-	}
+func Clean(basePath string, matcher *regexp.Regexp) {
+	processAllDirs(basePath, matcher, clean)
 }
 
 func clean(path string) {

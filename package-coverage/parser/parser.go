@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"sort"
 
+	"log"
+	"regexp"
+
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -12,7 +15,7 @@ import (
 type coverageByPackage map[string]*coverage
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file
-func PrintCoverage(basePath string) {
+func PrintCoverage(basePath string, matcher *regexp.Regexp) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		return
@@ -20,6 +23,11 @@ func PrintCoverage(basePath string) {
 
 	var contents string
 	for _, path := range paths {
+		if matcher.FindString(path) != "" {
+			log.Printf("Printing of coverage for path '%s' skipped due to skipDir regex '%s'", path, matcher.String())
+			continue
+		}
+
 		contents += getFileContents(path)
 	}
 

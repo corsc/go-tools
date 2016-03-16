@@ -23,6 +23,7 @@ func main() {
 	clean := false
 	print := false
 	ignoreDirs := ""
+	var matcher *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
@@ -39,25 +40,23 @@ func main() {
 	path := getPath()
 
 	if ignoreDirs != "" {
-		if matched, _ := regexp.MatchString(ignoreDirs, path); matched {
-			return
-		}
+		matcher = regexp.MustCompile(ignoreDirs)
 	}
 
 	if coverage {
 		if singleDir {
-			generator.CoverageSingle(path)
+			generator.CoverageSingle(path, matcher)
 		} else {
-			generator.Coverage(path)
+			generator.Coverage(path, matcher)
 		}
 	}
 
 	if print {
-		parser.PrintCoverage(path)
+		parser.PrintCoverage(path, matcher)
 	}
 
 	if clean {
-		generator.Clean(path)
+		generator.Clean(path, matcher)
 	}
 }
 

@@ -6,9 +6,10 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 
 	"bytes"
+
+	"regexp"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
@@ -17,9 +18,25 @@ const coverageFilename = "profile.cov"
 
 var fakeTestFilename = "fake_test.go"
 
+func processAllDirs(basePath string, matcher *regexp.Regexp, actionFunc func(string)) {
+	paths, err := utils.FindAllGoDirs(basePath)
+	if err != nil {
+		return
+	}
+
+	for _, path := range paths {
+		if matcher.FindString(path) != "" {
+			log.Printf("Cleaning of coverage for path '%s' skipped due to skipDir regex '%s'", path, matcher.String())
+			continue
+		}
+
+		actionFunc(path)
+	}
+}
+
 // this function will cause the generation of test coverage for the supplied directory and return the file path of the
 // resultant coverage file
-func generateCoverage(path string) string {
+func generateCoverage(path string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
@@ -27,11 +44,8 @@ func generateCoverage(path string) string {
 
 	err := execCoverage(path, coverageFilename)
 	if err != nil {
-		return ""
+		log.Printf("error generating coverage %s", err)
 	}
-
-	completePath := combinePath(path, coverageFilename)
-	return completePath
 }
 
 // add a fake test to ensure that there is at least 1 test in this directory
@@ -122,11 +136,4 @@ var execCoverage = func(dir string, coverageFilename string) error {
 	}
 	utils.LogWhenVerbose("created coverage file @ %s%s", dir, coverageFilename)
 	return nil
-}
-
-func combinePath(base string, child string) string {
-	if strings.HasPrefix(child, base) {
-		return child
-	}
-	return base + child
 }
