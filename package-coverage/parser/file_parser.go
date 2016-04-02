@@ -6,7 +6,9 @@ import (
 	"strings"
 )
 
-var lineFormatChecker = regexp.MustCompile(`(?i)^(([a-z0-9.\_-]+\/)+)([a-z0-9.\_-]+).go:(([0-9]+).([0-9]+)),(([0-9]+).([0-9]+))\s[0-9]+\s[0-9]+$`)
+const lineFormat = `(?i)^(([a-z0-9.\_-]+\/)+)([a-z0-9.\_-]+).go:(([0-9]+).([0-9]+)),(([0-9]+).([0-9]+))\s[0-9]+\s[0-9]+$`
+
+var lineFormatChecker = regexp.MustCompile(lineFormat)
 
 type coverage struct {
 	selfStatements int

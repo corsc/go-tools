@@ -1,2 +1,0 @@
--Add feature to generate HTML coverage using gocov-html and also generate summary/index page
--Add feature that can "diff" the current coverage with the previous coverage numbers
