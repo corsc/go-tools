@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"regexp"
 
+	"os"
+
 	"github.com/corsc/go-tools/package-coverage/generator"
 	"github.com/corsc/go-tools/package-coverage/parser"
 	"github.com/corsc/go-tools/package-coverage/utils"
@@ -37,6 +39,7 @@ func main() {
 		utils.VerboseOff()
 	}
 
+	startDir := utils.GetCurrentDir()
 	path := getPath()
 
 	if ignoreDirs != "" {
@@ -51,8 +54,18 @@ func main() {
 		}
 	}
 
+	// switch back to start dir
+	err := os.Chdir(startDir)
+	if err != nil {
+		panic(err)
+	}
+
 	if print {
-		parser.PrintCoverage(path, matcher)
+		if singleDir {
+			parser.PrintCoverageSingle(path, matcher)
+		} else {
+			parser.PrintCoverage(path, matcher)
+		}
 	}
 
 	if clean {

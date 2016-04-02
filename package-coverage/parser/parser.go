@@ -14,13 +14,29 @@ import (
 // CoverageByPackage contains the result of parsing one or more package's coverage file
 type coverageByPackage map[string]*coverage
 
+// PrintCoverageSingle is the same as PrintCoverage only for 1 directory only
+func PrintCoverageSingle(path string, matcher *regexp.Regexp) {
+	var fullPath string
+	if path == "./" {
+		fullPath = utils.GetCurrentDir()
+	} else {
+		fullPath = utils.GetCurrentDir() + path + "/"
+	}
+	fullPath += "profile.cov"
+
+	print([]string{fullPath}, matcher)
+}
+
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file
 func PrintCoverage(basePath string, matcher *regexp.Regexp) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
-		return
+		log.Panicf("error file finding coverage files %s", err)
 	}
+	print(paths, matcher)
+}
 
+func print(paths []string, matcher *regexp.Regexp) {
 	var contents string
 	for _, path := range paths {
 		if matcher.FindString(path) != "" {
