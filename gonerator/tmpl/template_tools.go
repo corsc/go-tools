@@ -9,9 +9,12 @@ import (
 
 // TemplateData is the data structure passed to the template engine
 type TemplateData struct {
-	TypeName string
+	TypeName    string
+	PackageName string
 
-	Fields []Field
+	Fields  []Field
+	Extras  []string
+	Methods []Method
 }
 
 // Generate will populate the buffer with generated code using the supplied type and template
@@ -32,10 +35,22 @@ func getTemplate() *template.Template {
 
 func getFuncMap() template.FuncMap {
 	return template.FuncMap{
+		"isNotFirst": isNotFirst,
 		"isNotLast":  isNotLast,
 		"firstLower": firstLower,
 		"firstUpper": strings.Title,
+		"pbEncode":   pbEncode,
+		"pbDecode":   pbDecode,
+		"toUpper":    strings.ToUpper,
+		"toLower":    strings.ToLower,
 	}
+}
+
+func isNotFirst(len int, index int, insert string) string {
+	if 0 == index {
+		return ""
+	}
+	return insert
 }
 
 func isNotLast(len int, index int, insert string) string {
@@ -45,12 +60,35 @@ func isNotLast(len int, index int, insert string) string {
 	return insert
 }
 
-func getTypeData(typeName string) *TemplateData {
-	return &TemplateData{
-		TypeName: typeName,
+func firstLower(typeName string) string {
+	return strings.ToLower(typeName[:1]) + typeName[1:]
+}
+
+// Decode helper for Protobuf
+func pbDecode(field Field, prefix string) string {
+	fieldName := field.Name
+	if custom, found := field.Tags["pbName"]; found {
+		fieldName = custom
+	}
+
+	// Special processing for things like Enum types
+	switch field.Type {
+	case "time.Time":
+		return "time.Unix(0, " + prefix + fieldName + ")"
+
+	default:
+		return prefix + fieldName
 	}
 }
 
-func firstLower(typeName string) string {
-	return strings.ToLower(typeName[:1]) + typeName[1:]
+// Encode helper for Protobuf
+func pbEncode(field Field, prefix string) string {
+	// Special processing for things like Enum types
+	switch field.Type {
+	case "time.Time":
+		return prefix + field.Name + ".UnixNano()"
+
+	default:
+		return prefix + field.Name
+	}
 }

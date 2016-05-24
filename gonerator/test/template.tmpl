@@ -1,6 +1,7 @@
+{{ $len := len .Fields }}
 
 import "database/sql"
 
 func populate{{firstUpper .TypeName}}(row *sql.Row, in *{{.TypeName}}) {
-	row.Scan({{$len := len .Fields }}{{range $index, $value := .Fields}}&in.{{$value.Name}}{{isNotLast $len $index ", "}}{{end}})
+	row.Scan({{range $index, $value := .Fields}}&in.{{$value.Name}}{{isNotLast $len $index ", "}}{{end}})
 }

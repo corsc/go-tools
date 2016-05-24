@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -24,27 +25,51 @@ type Gonerator struct {
 }
 
 // Build generates the code based on supplied values (request call to preceeding ParsePackageDir()
-func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string) {
-	g.buildHeader()
+func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string) {
+	g.buildHeader(outputFile)
 
-	templateContent, err := ioutil.ReadFile(dir + templateFile)
+	var path string
+	if !strings.HasPrefix(templateFile, "/") {
+		path = dir + templateFile
+	} else {
+		path = templateFile
+	}
+
+	templateContent, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
 
-	g.findTypeFields(typeName)
+	g.buildTemplateData(typeName, extras)
+
 	g.generate(string(templateContent))
 	g.writeFile(dir, outputFile, typeName)
 }
 
+func (g *Gonerator) buildTemplateData(typeName string, extras string) {
+	g.findTypeFields(typeName)
+
+	g.data.Extras = strings.Split(extras, ",")
+	g.data.PackageName = g.pkg.name
+}
+
 func (g *Gonerator) findTypeFields(typeName string) {
 	for _, file := range g.pkg.astFiles {
+		g.data = tmpl.TemplateData{
+			TypeName: typeName,
+		}
+		found := false
 		fields := tmpl.GetFields(file, typeName)
 		if len(fields) > 0 {
-			g.data = tmpl.TemplateData{
-				TypeName: typeName,
-				Fields:   fields,
-			}
+			g.data.Fields = fields
+			found = true
+		}
+		methods := tmpl.GetMethods(file, typeName)
+		if len(methods) > 0 {
+			g.data.Methods = methods
+			found = true
+		}
+		if found {
 			return
 		}
 	}
@@ -130,22 +155,39 @@ func (g *Gonerator) format() []byte {
 	return src
 }
 
-func (g *Gonerator) buildHeader() {
-	g.printf("// Code gonerated by \"github.com/corsc/go-tools/gonerator\"\n// DO NOT EDIT\n")
-	g.printf("\n")
-	g.printf("package %s", g.pkg.name)
-	g.printf("\n")
+func (g *Gonerator) toBytes() []byte {
+	return g.buf.Bytes()
+}
+
+func (g *Gonerator) buildHeader(outputFile string) {
+	if isGo(outputFile) {
+		g.printf("// Code gonerated by \"github.com/corsc/go-tools/gonerator\"\n// DO NOT EDIT\n")
+		g.printf("\n")
+	}
 }
 
 func (g *Gonerator) writeFile(dir string, filename string, typeName string) {
-	// Format the output.
-	src := g.format()
+	var src []byte
+	if isGo(filename) {
+		src = g.format()
+	} else {
+		src = g.toBytes()
+	}
 
-	// Write to file.
 	outputName := filepath.Join(dir, strings.ToLower(filename))
 
-	err := ioutil.WriteFile(outputName, src, 0644)
+	directory := filepath.Dir(outputName)
+	err := os.MkdirAll(directory, 0755)
 	if err != nil {
-		log.Fatalf("writing output: %s", err)
+		log.Fatalf("error creating destination directory: %s", err)
 	}
+
+	err = ioutil.WriteFile(outputName, src, 0644)
+	if err != nil {
+		log.Fatalf("error writing output: %s", err)
+	}
+}
+
+func isGo(filename string) bool {
+	return strings.Contains(filename, ".go")
 }

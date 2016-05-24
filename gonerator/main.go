@@ -20,10 +20,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-
-	"flag"
 	"os"
 
 	"github.com/corsc/go-tools/gonerator/gonerator"
@@ -31,26 +30,25 @@ import (
 
 func main() {
 	setUp()
-	typeName, templateFile, outputFile := getInputs()
+	typeName, templateFile, outputFile, extras := getInputs()
 
 	dir := "./"
 	g := &gonerator.Gonerator{}
 	g.ParsePackageDir(dir)
-	g.Build(dir, typeName, templateFile, outputFile)
+	g.Build(dir, typeName, templateFile, outputFile, extras)
 }
 
 var (
 	typeName     = flag.String("i", "", "type name; must be set")
 	templateFile = flag.String("t", "", "template file; must be set")
 	outputFile   = flag.String("o", "", "output file; must be set")
+	extras       = flag.String("e", "", "comma separated list of extra values; optional")
 )
 
 // Usage outputs the usage of this tool to std err
 func Usage() {
 	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "\tgonerator [flags] -i=T -t=template.tmpl [-o-T_gonerated.go]\n")
-	fmt.Fprintf(os.Stderr, "For more information, see:\n")
-	fmt.Fprintf(os.Stderr, "\thttps://github.com/corsc/go-tools/tree/master/gonerator/\n")
 	fmt.Fprintf(os.Stderr, "Flags:\n")
 	flag.PrintDefaults()
 }
@@ -60,7 +58,7 @@ func setUp() {
 	log.SetPrefix("gonerator: ")
 }
 
-func getInputs() (string, string, string) {
+func getInputs() (string, string, string, string) {
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -68,5 +66,5 @@ func getInputs() (string, string, string) {
 		flag.Usage()
 		os.Exit(2)
 	}
-	return *typeName, *templateFile, *outputFile
+	return *typeName, *templateFile, *outputFile, *extras
 }

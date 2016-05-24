@@ -1,7 +1,8 @@
 package test
 
-//go:generate gonerator -i=myType -t=template.tmpl -o=mytype_gonerated.go
-type myType struct {
+// MyType ...
+//go:generate gonerator -i=MyType -t=template.tmpl -o=mytype_gonerated.go
+type MyType struct {
 	ID      int64
 	Name    string
 	Balance float64

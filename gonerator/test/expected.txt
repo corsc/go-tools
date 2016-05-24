@@ -2,6 +2,6 @@ package test
 
 import "database/sql"
 
-func populateMyType(row *sql.Row, in *myType) {
+func populateMyType(row *sql.Row, in *MyType) {
 	row.Scan(&in.ID, &in.Name, &in.Balance)
 }

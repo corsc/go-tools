@@ -74,6 +74,43 @@ func TestIsNotLast(t *testing.T) {
 	}
 }
 
+func TestIsNotFirst(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		len      int
+		index    int
+		insert   string
+		expected string
+	}{
+		{
+			desc:     "empty list",
+			len:      0,
+			index:    0,
+			insert:   "FU",
+			expected: "",
+		},
+		{
+			desc:     "first",
+			len:      3,
+			index:    0,
+			insert:   "FU",
+			expected: "",
+		},
+		{
+			desc:     "not first",
+			len:      3,
+			index:    2,
+			insert:   "FU",
+			expected: "FU",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		result := isNotFirst(scenario.len, scenario.index, scenario.insert)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
+	}
+}
+
 func TestFirstLower(t *testing.T) {
 	scenarios := []struct {
 		desc     string
