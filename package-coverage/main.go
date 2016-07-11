@@ -25,6 +25,7 @@ func main() {
 	clean := false
 	print := false
 	ignoreDirs := ""
+	minCoverage := 0
 	var matcher *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
@@ -33,6 +34,7 @@ func main() {
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
 	flag.StringVar(&ignoreDirs, "i", `./\.git.*|./_.*`, "ignore regex specified directory")
+	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
 	flag.Parse()
 
 	if !verbose {
@@ -62,9 +64,9 @@ func main() {
 
 	if print {
 		if singleDir {
-			parser.PrintCoverageSingle(path, matcher)
+			parser.PrintCoverageSingle(path, matcher, minCoverage)
 		} else {
-			parser.PrintCoverage(path, matcher)
+			parser.PrintCoverage(path, matcher, minCoverage)
 		}
 	}
 
