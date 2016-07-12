@@ -62,16 +62,21 @@ func main() {
 		panic(err)
 	}
 
+	var coverageOk bool
 	if print {
 		if singleDir {
-			parser.PrintCoverageSingle(path, matcher, minCoverage)
+			coverageOk = parser.PrintCoverageSingle(path, matcher, minCoverage)
 		} else {
-			parser.PrintCoverage(path, matcher, minCoverage)
+			coverageOk = parser.PrintCoverage(path, matcher, minCoverage)
 		}
 	}
 
 	if clean {
 		generator.Clean(path, matcher)
+	}
+
+	if !coverageOk {
+		os.Exit(-1)
 	}
 }
 

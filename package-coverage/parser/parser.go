@@ -17,7 +17,7 @@ import (
 type coverageByPackage map[string]*coverage
 
 // PrintCoverageSingle is the same as PrintCoverage only for 1 directory only
-func PrintCoverageSingle(path string, matcher *regexp.Regexp, minCoverage int) {
+func PrintCoverageSingle(path string, matcher *regexp.Regexp, minCoverage int) bool {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -26,19 +26,19 @@ func PrintCoverageSingle(path string, matcher *regexp.Regexp, minCoverage int) {
 	}
 	fullPath += "profile.cov"
 
-	print([]string{fullPath}, matcher, minCoverage)
+	return print([]string{fullPath}, matcher, minCoverage)
 }
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file
-func PrintCoverage(basePath string, matcher *regexp.Regexp, minCoverage int) {
+func PrintCoverage(basePath string, matcher *regexp.Regexp, minCoverage int) bool {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
-	print(paths, matcher, minCoverage)
+	return print(paths, matcher, minCoverage)
 }
 
-func print(paths []string, matcher *regexp.Regexp, minCoverage int) {
+func print(paths []string, matcher *regexp.Regexp, minCoverage int) bool {
 	var contents string
 	for _, path := range paths {
 		if matcher.FindString(path) != "" {
@@ -51,7 +51,7 @@ func print(paths []string, matcher *regexp.Regexp, minCoverage int) {
 
 	coverageData := calculateCoverage(contents)
 	pkgs := getSortedPackages(coverageData)
-	printCoverage(pkgs, coverageData, float64(minCoverage))
+	return printCoverage(pkgs, coverageData, float64(minCoverage))
 }
 
 // CalculateCoverage will calculate and return the coverage for a package or packages from the supplied coverage file contents
@@ -81,20 +81,24 @@ func getSortedPackages(coverageData coverageByPackage) []string {
 	return output
 }
 
-func printCoverage(pkgs []string, coverageData coverageByPackage, minCoverage float64) {
+func printCoverage(pkgs []string, coverageData coverageByPackage, minCoverage float64) bool {
 	fmt.Printf("  %%		Statements	Package\n")
 
+	coverageOk := true
 	for _, pkg := range pkgs {
 		cover := coverageData[pkg]
 		covered, stmts := getStats(cover)
 
 		if covered < minCoverage {
 			fmt.Fprintf(os.Stderr, "\033[1;31m%2.2f		%5.0f		%s\033[0m\n", covered, stmts, pkg)
+			coverageOk = false
 		} else {
 			fmt.Fprintf(os.Stdout, "%2.2f		%5.0f		%s\n", covered, stmts, pkg)
 		}
 	}
 	fmt.Println()
+
+	return coverageOk
 }
 
 func getStats(cover *coverage) (float64, float64) {
