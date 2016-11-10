@@ -8,6 +8,8 @@ import (
 	"log"
 	"regexp"
 
+	"io"
+
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -15,7 +17,7 @@ import (
 type coverageByPackage map[string]*coverage
 
 // PrintCoverageSingle is the same as PrintCoverage only for 1 directory only
-func PrintCoverageSingle(path string, matcher *regexp.Regexp) {
+func PrintCoverageSingle(writer io.Writer, path string, matcher *regexp.Regexp) {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -24,19 +26,19 @@ func PrintCoverageSingle(path string, matcher *regexp.Regexp) {
 	}
 	fullPath += "profile.cov"
 
-	print([]string{fullPath}, matcher)
+	print(writer, []string{fullPath}, matcher)
 }
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file
-func PrintCoverage(basePath string, matcher *regexp.Regexp) {
+func PrintCoverage(writer io.Writer, basePath string, matcher *regexp.Regexp) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
-	print(paths, matcher)
+	print(writer, paths, matcher)
 }
 
-func print(paths []string, matcher *regexp.Regexp) {
+func getCoverageData(paths []string, matcher *regexp.Regexp) ([]string, coverageByPackage) {
 	var contents string
 	for _, path := range paths {
 		if matcher.FindString(path) != "" {
@@ -49,7 +51,13 @@ func print(paths []string, matcher *regexp.Regexp) {
 
 	coverageData := calculateCoverage(contents)
 	pkgs := getSortedPackages(coverageData)
-	printCoverage(pkgs, coverageData)
+
+	return pkgs, coverageData
+}
+
+func print(writer io.Writer, paths []string, matcher *regexp.Regexp) {
+	pkgs, coverageData := getCoverageData(paths, matcher)
+	printCoverage(writer, pkgs, coverageData)
 }
 
 // CalculateCoverage will calculate and return the coverage for a package or packages from the supplied coverage file contents
@@ -79,16 +87,16 @@ func getSortedPackages(coverageData coverageByPackage) []string {
 	return output
 }
 
-func printCoverage(pkgs []string, coverageData coverageByPackage) {
-	fmt.Printf("  %%		Statements	Package\n")
+func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPackage) {
+	fmt.Fprintf(writer, "  %%		Statements	Package\n")
 
 	for _, pkg := range pkgs {
 		cover := coverageData[pkg]
 		covered, stmts := getStats(cover)
 
-		fmt.Printf("%2.2f		%5.0f		%s\n", covered, stmts, pkg)
+		fmt.Fprintf(writer, "%2.2f		%5.0f		%s\n", covered, stmts, pkg)
 	}
-	fmt.Println()
+	fmt.Fprint(writer, "\n")
 }
 
 func getStats(cover *coverage) (float64, float64) {
