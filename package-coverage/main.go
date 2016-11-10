@@ -31,6 +31,7 @@ func main() {
 	webhook := ""
 	prefix := ""
 	depth := 0
+	minCoverage := 0
 	var matcher *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
@@ -43,6 +44,7 @@ func main() {
 	flag.StringVar(&webhook, "webhook", "", "Slack webhook URL")
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output (currently only supported by Slack output)")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all) (currently only supported by Slack output)")
+	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
 	flag.Parse()
 
 	if !verbose {
@@ -70,13 +72,14 @@ func main() {
 		panic(err)
 	}
 
+	var coverageOk bool
 	if print {
 		buffer := bytes.Buffer{}
 
 		if singleDir {
-			parser.PrintCoverageSingle(&buffer, path, matcher)
+			coverageOk = parser.PrintCoverageSingle(&buffer, path, matcher, minCoverage)
 		} else {
-			parser.PrintCoverage(&buffer, path, matcher)
+			coverageOk = parser.PrintCoverage(&buffer, path, matcher, minCoverage)
 		}
 
 		fmt.Print(buffer.String())
@@ -92,6 +95,10 @@ func main() {
 
 	if clean {
 		generator.Clean(path, matcher)
+	}
+
+	if !coverageOk {
+		os.Exit(-1)
 	}
 }
 
