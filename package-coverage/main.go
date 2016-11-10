@@ -72,7 +72,7 @@ func main() {
 		panic(err)
 	}
 
-	var coverageOk bool
+	coverageOk := true
 	if print {
 		buffer := bytes.Buffer{}
 

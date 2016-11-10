@@ -2,12 +2,12 @@ package parser
 
 import (
 	"fmt"
-	"io/ioutil"
-	"sort"
 	"io"
-	"os"
+	"io/ioutil"
 	"log"
 	"regexp"
+	"sort"
+
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -28,12 +28,12 @@ func PrintCoverageSingle(writer io.Writer, path string, matcher *regexp.Regexp, 
 }
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file
-func PrintCoverage(writer io.Writer, basePath string, matcher *regexp.Regexp) bool {
+func PrintCoverage(writer io.Writer, basePath string, matcher *regexp.Regexp, minCoverage int) bool {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
-	return print(writer, paths, matcher)
+	return print(writer, paths, matcher, minCoverage)
 }
 
 func getCoverageData(paths []string, matcher *regexp.Regexp) ([]string, coverageByPackage) {

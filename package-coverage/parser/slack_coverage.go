@@ -82,7 +82,7 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 }
 
 func sendToSlack(webhook string, attachments string) {
-	message := `{ "text": "*Test Coverage*", "attachments": [ ` + attachments + ` ] }`
+	message := `{ "username": "Test Coverage Bot", "attachments": [ ` + attachments + ` ] }`
 
 	req, err := http.NewRequest("POST", webhook, bytes.NewBufferString(message))
 
