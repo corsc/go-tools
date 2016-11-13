@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// coverage data line format (used to filter out the rest of the coverage file contents)
 const lineFormat = `(?i)^(([a-z0-9.\_-]+\/)+)([a-z0-9.\_-]+).go:(([0-9]+).([0-9]+)),(([0-9]+).([0-9]+))\s[0-9]+\s[0-9]+$`
 
 var lineFormatChecker = regexp.MustCompile(lineFormat)
@@ -18,6 +19,7 @@ type coverage struct {
 	childCovered    int
 }
 
+// convert string contents of the coverage files into data structures
 func parseLines(raw string) map[string]*coverage {
 	output := make(map[string]*coverage)
 

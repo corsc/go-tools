@@ -12,7 +12,12 @@ import (
 // Clean will search the supplied directory and any sub-directories that contain Go files and remove any
 // existing coverage files
 func Clean(basePath string, matcher *regexp.Regexp) {
-	processAllDirs(basePath, matcher, clean)
+	processAllDirs(basePath, matcher, "clean", clean)
+}
+
+// CleanSingle will search the supplied directory that contain Go files and remove any existing coverage file
+func CleanSingle(path string) {
+	clean(path)
 }
 
 func clean(path string) {

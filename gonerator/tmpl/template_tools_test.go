@@ -37,77 +37,47 @@ func TestFieldsAsList(t *testing.T) {
 	assert.Equal(t, "row.Scan(&in.ID, &in.Name, &in.Balance)", buffer.String())
 }
 
-func TestIsNotLast(t *testing.T) {
+func TestIsNotLastAndIsNotFirst(t *testing.T) {
 	scenarios := []struct {
-		desc     string
-		len      int
-		index    int
-		insert   string
-		expected string
+		desc               string
+		len                int
+		index              int
+		insert             string
+		expectedIsNotFirst string
+		expectedIsNotLast  string
 	}{
 		{
-			desc:     "empty list",
-			len:      0,
-			index:    0,
-			insert:   "FU",
-			expected: "FU",
+			desc:               "empty list",
+			len:                0,
+			index:              0,
+			insert:             "BAR",
+			expectedIsNotFirst: "BAR",
+			expectedIsNotFirst: "",
 		},
 		{
-			desc:     "last",
-			len:      3,
-			index:    2,
-			insert:   "FU",
-			expected: "",
+			desc:               "last",
+			len:                6,
+			index:              5,
+			insert:             "BAR",
+			expectedIsNotFirst: "",
+			expectedIsNotLast:  "",
 		},
 		{
-			desc:     "not last",
-			len:      3,
-			index:    1,
-			insert:   "FU",
-			expected: "FU",
+			desc:               "not last",
+			len:                33,
+			index:              22,
+			insert:             "FU",
+			expectedIsNotFirst: "FU",
+			expectedIsNotLast:  "FU",
 		},
 	}
 
 	for _, scenario := range scenarios {
-		result := isNotLast(scenario.len, scenario.index, scenario.insert)
-		assert.Equal(t, scenario.expected, result, scenario.desc)
-	}
-}
+		resultIsNotLast := isNotLast(scenario.len, scenario.index, scenario.insert)
+		assert.Equal(t, scenario.expectedIsNotLast, resultIsNotLast, scenario.desc)
 
-func TestIsNotFirst(t *testing.T) {
-	scenarios := []struct {
-		desc     string
-		len      int
-		index    int
-		insert   string
-		expected string
-	}{
-		{
-			desc:     "empty list",
-			len:      0,
-			index:    0,
-			insert:   "FU",
-			expected: "",
-		},
-		{
-			desc:     "first",
-			len:      3,
-			index:    0,
-			insert:   "FU",
-			expected: "",
-		},
-		{
-			desc:     "not first",
-			len:      3,
-			index:    2,
-			insert:   "FU",
-			expected: "FU",
-		},
-	}
-
-	for _, scenario := range scenarios {
-		result := isNotFirst(scenario.len, scenario.index, scenario.insert)
-		assert.Equal(t, scenario.expected, result, scenario.desc)
+		resultIsNotFirst := isNotFirst(scenario.len, scenario.index, scenario.insert)
+		assert.Equal(t, scenario.expectedIsNotFirst, resultIsNotFirst, scenario.desc)
 	}
 }
 

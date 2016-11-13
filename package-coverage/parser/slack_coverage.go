@@ -15,8 +15,19 @@ import (
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
-// SlackCoverageSingle is the same as GetCoverage only for 1 directory only
-func SlackCoverageSingle(path string, matcher *regexp.Regexp, webhook string, prefix string, depth int) {
+// SlackCoverage will attempt to calculate and output the coverage from the supplied coverage files to Slack
+func SlackCoverage(basePath string, matcher *regexp.Regexp, webHook string, prefix string, depth int) {
+	paths, err := utils.FindAllCoverageFiles(basePath)
+	if err != nil {
+		log.Panicf("error file finding coverage files %s", err)
+	}
+
+	pkgs, coverageData := getCoverageData(paths, matcher)
+	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
+}
+
+// SlackCoverageSingle is the same as SlackCoverage only for 1 directory only
+func SlackCoverageSingle(path string, webHook string, prefix string, depth int) {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -25,21 +36,17 @@ func SlackCoverageSingle(path string, matcher *regexp.Regexp, webhook string, pr
 	}
 	fullPath += "profile.cov"
 
-	pkgs, coverageData := getCoverageData([]string{fullPath}, matcher)
-	prepareAndSendToSlack(pkgs, coverageData, webhook, prefix, depth)
+	contents := getFileContents(fullPath)
+	pkgs, coverageData := getCoverageByContents(contents)
+
+	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
 }
 
-// SlackCoverage will attempt to calculate and print the coverage from the supplied coverage files
-func SlackCoverage(basePath string, matcher *regexp.Regexp, webhook string, prefix string, depth int) {
-	paths, err := utils.FindAllCoverageFiles(basePath)
-	if err != nil {
-		log.Panicf("error file finding coverage files %s", err)
-	}
-
-	pkgs, coverageData := getCoverageData(paths, matcher)
-	prepareAndSendToSlack(pkgs, coverageData, webhook, prefix, depth)
-}
-
+// prepare the slack message format and send.
+// Notes:
+// * the message uses the Slack message "attachments"; one attachment per package
+// * each package is prefixed with a color highlight that corresponds to coverage amounts.
+// (coverage > 70% is green.  70% > x >= 50 is orange.  coverage < 50% is red)
 func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhook string, prefix string, depth int) {
 	lines := 0
 	output := ""
@@ -81,10 +88,11 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 	}
 }
 
-func sendToSlack(webhook string, attachments string) {
+// call the Slack incoming webHook API to send the message
+func sendToSlack(webHook string, attachments string) {
 	message := `{ "username": "Test Coverage Bot", "attachments": [ ` + attachments + ` ] }`
 
-	req, err := http.NewRequest("POST", webhook, bytes.NewBufferString(message))
+	req, err := http.NewRequest("POST", webHook, bytes.NewBufferString(message))
 
 	req.Header.Set("Content-Type", "application/json")
 

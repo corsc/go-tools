@@ -57,35 +57,31 @@ func GetMethods(file *ast.File, typename string) []Method {
 	return out
 }
 
-func extractParamsAndResults(fnDesl *ast.FuncType) ([]MethodField, []MethodField) {
-	params := []MethodField{}
-	results := []MethodField{}
+func extractParamsAndResults(funcType *ast.FuncType) ([]MethodField, []MethodField) {
+	params := fieldListToMethodFields(funcType.Params)
+	results := fieldListToMethodFields(funcType.Results.List)
 
-	for _, param := range fnDesl.Params.List {
-		typeStr := getTypeString(param.Type)
+	return params, results
+}
+
+func fieldListToMethodFields(fieldList *ast.FieldList) []MethodField {
+	params := []MethodField{}
+
+	for _, item := range fieldList.List {
+		typeStr := getTypeString(item.Type)
 		funcField := MethodField{
 			Type:  typeStr,
-			Names: make([]string, len(param.Names)),
+			Names: make([]string, len(item.Names)),
 		}
-		for i := 0; i < len(param.Names); i++ {
-			funcField.Names[i] = param.Names[i].Name
+
+		for i := 0; i < len(item.Names); i++ {
+			funcField.Names[i] = item.Names[i].Name
 		}
+
 		params = append(params, funcField)
 	}
 
-	for _, result := range fnDesl.Results.List {
-		typeStr := getTypeString(result.Type)
-		funcResult := MethodField{
-			Type:  typeStr,
-			Names: make([]string, len(result.Names)),
-		}
-		for i := 0; i < len(result.Names); i++ {
-			funcResult.Names[i] = result.Names[i].Name
-		}
-		results = append(results, funcResult)
-	}
-
-	return params, results
+	return params
 }
 
 func getTypeString(expr ast.Expr) string {

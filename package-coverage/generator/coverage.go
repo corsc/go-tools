@@ -18,7 +18,7 @@ const coverageFilename = "profile.cov"
 
 var fakeTestFilename = "fake_test.go"
 
-func processAllDirs(basePath string, matcher *regexp.Regexp, actionFunc func(string)) {
+func processAllDirs(basePath string, matcher *regexp.Regexp, logTag string, actionFunc func(string)) {
 	paths, err := utils.FindAllGoDirs(basePath)
 	if err != nil {
 		return
@@ -26,10 +26,11 @@ func processAllDirs(basePath string, matcher *regexp.Regexp, actionFunc func(str
 
 	for _, path := range paths {
 		if matcher.FindString(path) != "" {
-			log.Printf("Cleaning of coverage for path '%s' skipped due to skipDir regex '%s'", path, matcher.String())
+			utils.LogWhenVerbose("[%s] path '%s' skipped due to skipDir regex '%s'", logTag, path, matcher.String())
 			continue
 		}
 
+		utils.LogWhenVerbose("[%s] processing path '%s'", logTag, path)
 		actionFunc(path)
 	}
 }
@@ -61,6 +62,7 @@ func createTestFilename(path string) string {
 	return path + fakeTestFilename
 }
 
+// find the package name by using the go AST
 func findPackageName(path string) string {
 	fileSet := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fileSet, path, nil, 0)
@@ -75,11 +77,12 @@ func findPackageName(path string) string {
 	return UnknownPackage
 }
 
+// create a fake test so that all directories are guaranteed to contain tests (and therefore coverage will be generated)
 func createTestFile(packageName string, testFilename string) {
 	utils.LogWhenVerbose("created test for package %s file @ %s", packageName, testFilename)
 
 	if _, err := os.Stat(testFilename); err == nil {
-		log.Printf("file already exists @ %s cowardly refusing to overwrite", testFilename)
+		utils.LogWhenVerbose("file already exists @ %s cowardly refusing to overwrite", testFilename)
 		return
 	}
 

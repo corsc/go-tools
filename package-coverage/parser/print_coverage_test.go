@@ -17,7 +17,7 @@ func TestCalculateCoverage(t *testing.T) {
 		},
 	}
 
-	result := calculateCoverage(sampleCoverageFileContents)
+	result := getCoverageByPackage(sampleCoverageFileContents)
 	converted := map[string]*coverage(result)
 	assert.Equal(t, expected, converted)
 }
