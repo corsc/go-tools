@@ -53,6 +53,7 @@ func main() {
 
 	startDir := utils.GetCurrentDir()
 	path := getPath()
+	goTestArgs := getGoTestArguments()
 
 	if ignoreDirs != "" {
 		matcher = regexp.MustCompile(ignoreDirs)
@@ -60,9 +61,9 @@ func main() {
 
 	if coverage {
 		if singleDir {
-			generator.CoverageSingle(path)
+			generator.CoverageSingle(path, verbose, goTestArgs)
 		} else {
-			generator.Coverage(path, matcher)
+			generator.Coverage(path, matcher, verbose, goTestArgs)
 		}
 	}
 
@@ -112,4 +113,9 @@ func getPath() string {
 		panic("Please include a directory as the last argument")
 	}
 	return path
+}
+
+func getGoTestArguments() []string {
+	args := flag.Args()
+	return args[1:]
 }
