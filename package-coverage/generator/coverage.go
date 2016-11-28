@@ -37,7 +37,7 @@ func processAllDirs(basePath string, matcher *regexp.Regexp, logTag string, acti
 
 // this function will cause the generation of test coverage for the supplied directory and return the file path of the
 // resultant coverage file
-func generateCoverage(path string, verbose bool, goTestArgs []string) {
+func generateCoverage(path string, fileMatcher *regexp.Regexp, verbose bool, goTestArgs []string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)

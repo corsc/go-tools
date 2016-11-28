@@ -8,13 +8,15 @@ import (
 
 type fragment struct {
 	pkg        string
+	file       string
 	statements int
 	covered    bool
 }
 
 func parseLine(raw string) fragment {
 	output := fragment{
-		pkg: extractPackage(raw),
+		pkg:  extractPackage(raw),
+		file: extractFile(raw),
 	}
 
 	output.statements, output.covered = extractNumbers(raw)
@@ -29,6 +31,21 @@ func extractPackage(raw string) string {
 	}
 
 	return raw[:(lastSlash + 1)]
+}
+
+func extractFile(raw string) string {
+	lastSlash := strings.LastIndex(raw, "/")
+	if lastSlash == -1 {
+		panic(fmt.Errorf("line skipped due to lack of package '%s'", raw))
+	}
+
+	fileAndLines := raw[(lastSlash + 1):]
+	line := strings.LastIndex(fileAndLines, ":")
+	if line == -1 {
+		panic(fmt.Errorf("line skipped due to lack of line number '%s'", raw))
+	}
+
+	return fileAndLines[:line]
 }
 
 func extractNumbers(raw string) (int, bool) {
