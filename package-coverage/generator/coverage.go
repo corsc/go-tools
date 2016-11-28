@@ -1,11 +1,15 @@
 package generator
 
 import (
+	"bufio"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"bytes"
 
@@ -46,6 +50,15 @@ func generateCoverage(path string, fileMatcher *regexp.Regexp, verbose bool, goT
 	err := execCoverage(path, coverageFilename, verbose, goTestArgs)
 	if err != nil {
 		log.Printf("error generating coverage %s", err)
+	}
+
+	if fileMatcher == nil {
+		return
+	}
+
+	err = filterCoverage(filepath.Join(path, coverageFilename), fileMatcher)
+	if err != nil {
+		log.Printf("error filtering files: %s", err)
 	}
 }
 
@@ -141,5 +154,57 @@ var execCoverage = func(dir, coverageFilename string, verbose bool, goTestArgs [
 		return err
 	}
 	utils.LogWhenVerbose("created coverage file @ %s%s", dir, coverageFilename)
+	return nil
+}
+
+func filterCoverage(coverageFilename string, fileMatcher *regexp.Regexp) error {
+	coverageTempFilename := coverageFilename + "~"
+
+	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := coverageTempFile.Close(); err != nil {
+			panic(fmt.Errorf("cannot close temporary file %s: %v", coverageTempFilename, err))
+		}
+	}()
+
+	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := coverageFile.Close(); err != nil {
+			panic(fmt.Errorf("Cannot close coverage file %s: %v", coverageFilename, err))
+		}
+	}()
+
+	coverageFileScanner := bufio.NewScanner(coverageFile)
+	for coverageFileScanner.Scan() {
+		line := coverageFileScanner.Text()
+
+		fileNameEndIndex := strings.LastIndex(line, ":")
+		fileName := line[:fileNameEndIndex]
+
+		if fileMatcher.MatchString(fileName) {
+			continue
+		}
+
+		if _, err := fmt.Fprintln(coverageTempFile, line); err != nil {
+			return err
+		}
+	}
+
+	if err := os.Remove(coverageFilename); err != nil {
+		log.Printf("cannot remove old coverage file %s: %v", coverageFilename, err)
+	}
+
+	if err := os.Rename(coverageTempFilename, coverageFilename); err != nil {
+		log.Printf("cannot rename filtered coverage file %s: %v", coverageTempFilename, err)
+	}
+
 	return nil
 }

@@ -8,7 +8,7 @@ import (
 )
 
 // get coverage using the paths and exclusions supplied
-func getCoverageData(paths []string, dirMatcher, fileMatcher *regexp.Regexp) ([]string, coverageByPackage) {
+func getCoverageData(paths []string, dirMatcher *regexp.Regexp) ([]string, coverageByPackage) {
 	var contents string
 	for _, path := range paths {
 		if dirMatcher.FindString(path) != "" {
@@ -19,20 +19,20 @@ func getCoverageData(paths []string, dirMatcher, fileMatcher *regexp.Regexp) ([]
 		contents += getFileContents(path)
 	}
 
-	return getCoverageByContents(contents, fileMatcher)
+	return getCoverageByContents(contents)
 }
 
 // get coverage from supplied string (used after concatenating all the individual coverage files together
-func getCoverageByContents(contents string, fileMatcher *regexp.Regexp) ([]string, coverageByPackage) {
-	coverageData := getCoverageByPackage(contents, fileMatcher)
+func getCoverageByContents(contents string) ([]string, coverageByPackage) {
+	coverageData := getCoverageByPackage(contents)
 	pkgs := getSortedPackages(coverageData)
 
 	return pkgs, coverageData
 }
 
 // will calculate and return the coverage for a package or packages from the supplied coverage file contents
-func getCoverageByPackage(contents string, fileMatcher *regexp.Regexp) coverageByPackage {
-	coverageData := parseLines(contents, fileMatcher)
+func getCoverageByPackage(contents string) coverageByPackage {
+	coverageData := parseLines(contents)
 	return coverageData
 }
 

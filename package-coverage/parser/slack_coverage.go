@@ -16,18 +16,18 @@ import (
 )
 
 // SlackCoverage will attempt to calculate and output the coverage from the supplied coverage files to Slack
-func SlackCoverage(basePath string, dirMatcher, fileMatcher *regexp.Regexp, webHook string, prefix string, depth int) {
+func SlackCoverage(basePath string, dirMatcher *regexp.Regexp, webHook string, prefix string, depth int) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
 
-	pkgs, coverageData := getCoverageData(paths, dirMatcher, fileMatcher)
+	pkgs, coverageData := getCoverageData(paths, dirMatcher)
 	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
 }
 
 // SlackCoverageSingle is the same as SlackCoverage only for 1 directory only
-func SlackCoverageSingle(path string, fileExclusions *regexp.Regexp, webHook string, prefix string, depth int) {
+func SlackCoverageSingle(path string, webHook string, prefix string, depth int) {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -37,7 +37,7 @@ func SlackCoverageSingle(path string, fileExclusions *regexp.Regexp, webHook str
 	fullPath += "profile.cov"
 
 	contents := getFileContents(fullPath)
-	pkgs, coverageData := getCoverageByContents(contents, fileExclusions)
+	pkgs, coverageData := getCoverageByContents(contents)
 
 	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
 }

@@ -83,9 +83,9 @@ func main() {
 		buffer := bytes.Buffer{}
 
 		if singleDir {
-			coverageOk = parser.PrintCoverageSingle(&buffer, path, fileExclusions, minCoverage)
+			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage)
 		} else {
-			coverageOk = parser.PrintCoverage(&buffer, path, dirMatcher, fileExclusions, minCoverage)
+			coverageOk = parser.PrintCoverage(&buffer, path, dirMatcher, minCoverage)
 		}
 
 		fmt.Print(buffer.String())
@@ -93,9 +93,9 @@ func main() {
 
 	if slack {
 		if singleDir {
-			parser.SlackCoverageSingle(path, fileExclusions, webHook, prefix, depth)
+			parser.SlackCoverageSingle(path, webHook, prefix, depth)
 		} else {
-			parser.SlackCoverage(path, dirMatcher, fileExclusions, webHook, prefix, depth)
+			parser.SlackCoverage(path, dirMatcher, webHook, prefix, depth)
 		}
 	}
 

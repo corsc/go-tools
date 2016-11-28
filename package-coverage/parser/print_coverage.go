@@ -13,18 +13,18 @@ import (
 type coverageByPackage map[string]*coverage
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file to standard out.
-func PrintCoverage(writer io.Writer, basePath string, dirMatcher, fileMatcher *regexp.Regexp, minCoverage int) bool {
+func PrintCoverage(writer io.Writer, basePath string, dirMatcher *regexp.Regexp, minCoverage int) bool {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
 
-	pkgs, coverageData := getCoverageData(paths, dirMatcher, fileMatcher)
+	pkgs, coverageData := getCoverageData(paths, dirMatcher)
 	return printCoverage(writer, pkgs, coverageData, float64(minCoverage))
 }
 
 // PrintCoverageSingle is the same as PrintCoverage only for 1 directory only
-func PrintCoverageSingle(writer io.Writer, path string, fileMatcher *regexp.Regexp, minCoverage int) bool {
+func PrintCoverageSingle(writer io.Writer, path string, minCoverage int) bool {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -34,7 +34,7 @@ func PrintCoverageSingle(writer io.Writer, path string, fileMatcher *regexp.Rege
 	fullPath += "profile.cov"
 
 	contents := getFileContents(fullPath)
-	pkgs, coverageData := getCoverageByContents(contents, fileMatcher)
+	pkgs, coverageData := getCoverageByContents(contents)
 
 	return printCoverage(writer, pkgs, coverageData, float64(minCoverage))
 }

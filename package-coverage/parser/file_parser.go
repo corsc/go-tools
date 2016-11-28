@@ -20,7 +20,7 @@ type coverage struct {
 }
 
 // convert string contents of the coverage files into data structures
-func parseLines(raw string, fileExclusions *regexp.Regexp) map[string]*coverage {
+func parseLines(raw string) map[string]*coverage {
 	output := make(map[string]*coverage)
 
 	lines := strings.Split(raw, "\n")
@@ -30,7 +30,7 @@ func parseLines(raw string, fileExclusions *regexp.Regexp) map[string]*coverage 
 	}
 
 	fragmentCh := make(chan fragment, len(lines))
-	doneCh := processFragments(output, fragmentCh, fileExclusions)
+	doneCh := processFragments(output, fragmentCh)
 
 	for _, line := range lines {
 		if !validLineFormat(line) {
@@ -53,14 +53,11 @@ func validLineFormat(line string) bool {
 	return lineFormatChecker.MatchString(line)
 }
 
-func processFragments(output map[string]*coverage, fragmentCh chan fragment, fileExclusions *regexp.Regexp) chan struct{} {
+func processFragments(output map[string]*coverage, fragmentCh chan fragment) chan struct{} {
 	doneCh := make(chan struct{})
 
 	go func() {
 		for fragment := range fragmentCh {
-			if fileExclusions != nil && fileExclusions.MatchString(fragment.file) {
-				continue
-			}
 			coverage := getOrCreateCoverage(output, fragment.pkg)
 			processSelfCoverage(coverage, fragment)
 		}
