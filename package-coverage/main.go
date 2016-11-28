@@ -117,5 +117,12 @@ func getPath() string {
 
 func getGoTestArguments() []string {
 	args := flag.Args()
-	return args[1:]
+
+	// We only assume what comes after -- to be `go test` arguments. If there are two arguments, we do not assume them
+	// to be `go test` arguments.
+	if (len(args) >= 2 && args[1] != "--") || len(args) < 3 {
+		return []string{}
+	}
+
+	return args[2:]
 }
