@@ -1,16 +1,13 @@
 package parser
 
 import (
-	"fmt"
-	"log"
-	"regexp"
-
 	"bytes"
-	"net/http"
-
-	"strings"
-
+	"fmt"
 	"io/ioutil"
+	"log"
+	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 )

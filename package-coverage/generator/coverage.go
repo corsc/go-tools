@@ -2,6 +2,7 @@ package generator
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -9,11 +10,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
-
-	"bytes"
-
 	"regexp"
+	"strings"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 )

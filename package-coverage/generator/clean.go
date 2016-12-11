@@ -3,7 +3,6 @@ package generator
 import (
 	"log"
 	"os"
-
 	"regexp"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
