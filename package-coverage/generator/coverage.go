@@ -1,15 +1,17 @@
 package generator
 
 import (
+	"bufio"
+	"bytes"
+	"fmt"
 	"go/parser"
 	"go/token"
 	"log"
 	"os"
 	"os/exec"
-
-	"bytes"
-
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
@@ -37,7 +39,7 @@ func processAllDirs(basePath string, matcher *regexp.Regexp, logTag string, acti
 
 // this function will cause the generation of test coverage for the supplied directory and return the file path of the
 // resultant coverage file
-func generateCoverage(path string, goTestArgs []string) {
+func generateCoverage(path string, fileMatcher *regexp.Regexp, goTestArgs []string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
@@ -46,6 +48,15 @@ func generateCoverage(path string, goTestArgs []string) {
 	err := execCoverage(path, coverageFilename, goTestArgs)
 	if err != nil {
 		log.Printf("error generating coverage %s", err)
+	}
+
+	if fileMatcher == nil {
+		return
+	}
+
+	err = filterCoverage(filepath.Join(path, coverageFilename), fileMatcher)
+	if err != nil {
+		log.Printf("error filtering files: %s", err)
 	}
 }
 
@@ -141,5 +152,57 @@ var execCoverage = func(dir, coverageFilename string, goTestArgs []string) error
 		return err
 	}
 	utils.LogWhenVerbose("created coverage file @ %s%s", dir, coverageFilename)
+	return nil
+}
+
+func filterCoverage(coverageFilename string, fileMatcher *regexp.Regexp) error {
+	coverageTempFilename := coverageFilename + "~"
+
+	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0644)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := coverageTempFile.Close(); err != nil {
+			panic(fmt.Errorf("cannot close temporary file %s: %v", coverageTempFilename, err))
+		}
+	}()
+
+	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if err := coverageFile.Close(); err != nil {
+			panic(fmt.Errorf("Cannot close coverage file %s: %v", coverageFilename, err))
+		}
+	}()
+
+	coverageFileScanner := bufio.NewScanner(coverageFile)
+	for coverageFileScanner.Scan() {
+		line := coverageFileScanner.Text()
+
+		fileNameEndIndex := strings.LastIndex(line, ":")
+		fileName := line[:fileNameEndIndex]
+
+		if fileMatcher.MatchString(fileName) {
+			continue
+		}
+
+		if _, err := fmt.Fprintln(coverageTempFile, line); err != nil {
+			return err
+		}
+	}
+
+	if err := os.Remove(coverageFilename); err != nil {
+		log.Printf("cannot remove old coverage file %s: %v", coverageFilename, err)
+	}
+
+	if err := os.Rename(coverageTempFilename, coverageFilename); err != nil {
+		log.Printf("cannot rename filtered coverage file %s: %v", coverageTempFilename, err)
+	}
+
 	return nil
 }

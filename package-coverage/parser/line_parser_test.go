@@ -10,6 +10,7 @@ func TestParseLine(t *testing.T) {
 	in := "github.com/corsc/go-tools/package-coverage/line_parser.go:9.37,11.2 1 0"
 	expected := fragment{
 		pkg:        "github.com/corsc/go-tools/package-coverage/",
+		file:       "line_parser.go",
 		statements: 1,
 		covered:    false,
 	}

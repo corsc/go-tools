@@ -13,13 +13,13 @@ import (
 type coverageByPackage map[string]*coverage
 
 // PrintCoverage will attempt to calculate and print the coverage from the supplied coverage file to standard out.
-func PrintCoverage(writer io.Writer, basePath string, matcher *regexp.Regexp, minCoverage int) bool {
+func PrintCoverage(writer io.Writer, basePath string, dirMatcher *regexp.Regexp, minCoverage int) bool {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
 
-	pkgs, coverageData := getCoverageData(paths, matcher)
+	pkgs, coverageData := getCoverageData(paths, dirMatcher)
 	return printCoverage(writer, pkgs, coverageData, float64(minCoverage))
 }
 

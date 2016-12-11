@@ -1,11 +1,9 @@
 package generator
 
 import (
-	"testing"
-
-	"os"
-
 	"log"
+	"os"
+	"testing"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 	"github.com/stretchr/testify/assert"
