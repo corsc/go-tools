@@ -52,5 +52,9 @@ func extractStatements(raw string) int {
 }
 
 func extractCovered(raw string) bool {
-	return raw == "1"
+	covered, err := strconv.Atoi(raw)
+	if err != nil {
+		panic(err)
+	}
+	return covered > 0
 }
