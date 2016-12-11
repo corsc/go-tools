@@ -68,20 +68,6 @@ func TestRemoveFakeTest(t *testing.T) {
 	assert.True(t, os.IsNotExist(err))
 }
 
-func mockExecCoverage() func(string, string) error {
-	original := execCoverage
-
-	execCoverage = func(string, string) error {
-		return nil
-	}
-
-	return original
-}
-
-func restoreExecCoverage(original func(string, string) error) {
-	execCoverage = original
-}
-
 func removeTestFile(path string) {
 	err := os.Remove(path)
 	if err != nil {

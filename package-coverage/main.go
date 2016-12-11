@@ -61,9 +61,9 @@ func main() {
 
 	if coverage {
 		if singleDir {
-			generator.CoverageSingle(path, verbose, goTestArgs)
+			generator.CoverageSingle(path, goTestArgs)
 		} else {
-			generator.Coverage(path, matcher, verbose, goTestArgs)
+			generator.Coverage(path, matcher, goTestArgs)
 		}
 	}
 
