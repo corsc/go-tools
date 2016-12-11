@@ -16,13 +16,13 @@ import (
 )
 
 // SlackCoverage will attempt to calculate and output the coverage from the supplied coverage files to Slack
-func SlackCoverage(basePath string, matcher *regexp.Regexp, webHook string, prefix string, depth int) {
+func SlackCoverage(basePath string, dirMatcher *regexp.Regexp, webHook string, prefix string, depth int) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
 
-	pkgs, coverageData := getCoverageData(paths, matcher)
+	pkgs, coverageData := getCoverageData(paths, dirMatcher)
 	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
 }
 
