@@ -24,7 +24,7 @@ func (f Method) String() string {
 }
 
 // GetMethods will extract a slice of funcs from the supplied AST
-func GetMethods(file *ast.File, typename string) []Method {
+func GetMethods(file *ast.File, typeName string) []Method {
 	out := []Method{}
 
 	for _, decl := range file.Decls {
@@ -37,6 +37,10 @@ func GetMethods(file *ast.File, typename string) []Method {
 					if !ok {
 						continue
 					}
+					if spec.Name.Name != typeName {
+						continue
+					}
+
 					for _, field := range sType.Methods.List {
 						switch fnType := field.Type.(type) {
 						case *ast.FuncType:
@@ -57,38 +61,52 @@ func GetMethods(file *ast.File, typename string) []Method {
 	return out
 }
 
-func extractParamsAndResults(funcType *ast.FuncType) ([]MethodField, []MethodField) {
-	params := fieldListToMethodFields(funcType.Params)
-	results := fieldListToMethodFields(funcType.Results.List)
+func extractParamsAndResults(fnDesl *ast.FuncType) ([]MethodField, []MethodField) {
+	params := []MethodField{}
+	results := []MethodField{}
+
+	for _, param := range fnDesl.Params.List {
+		typeStr := getTypeString(param.Type)
+		funcField := MethodField{
+			Type:  typeStr,
+			Names: make([]string, len(param.Names)),
+		}
+		for i := 0; i < len(param.Names); i++ {
+			funcField.Names[i] = param.Names[i].Name
+		}
+		params = append(params, funcField)
+	}
+
+	for _, result := range fnDesl.Results.List {
+		typeStr := getTypeString(result.Type)
+		funcResult := MethodField{
+			Type:  typeStr,
+			Names: make([]string, len(result.Names)),
+		}
+		for i := 0; i < len(result.Names); i++ {
+			funcResult.Names[i] = result.Names[i].Name
+		}
+		results = append(results, funcResult)
+	}
 
 	return params, results
 }
 
-func fieldListToMethodFields(fieldList *ast.FieldList) []MethodField {
-	params := []MethodField{}
-
-	for _, item := range fieldList.List {
-		typeStr := getTypeString(item.Type)
-		funcField := MethodField{
-			Type:  typeStr,
-			Names: make([]string, len(item.Names)),
-		}
-
-		for i := 0; i < len(item.Names); i++ {
-			funcField.Names[i] = item.Names[i].Name
-		}
-
-		params = append(params, funcField)
-	}
-
-	return params
-}
-
 func getTypeString(expr ast.Expr) string {
 	var result string
+
 	switch etype := expr.(type) {
+	case *ast.ArrayType:
+		result = fmt.Sprintf("[]%s", getTypeString(etype.Elt))
+	case *ast.MapType:
+		result = fmt.Sprintf("map[%s]%s", etype.Key, etype.Value)
+
 	case *ast.SelectorExpr:
 		result = fmt.Sprintf("%s.%s", etype.X, etype.Sel)
+
+	case *ast.StarExpr:
+		result = fmt.Sprintf("*%s", getTypeString(etype.X))
+
 	default:
 		result = fmt.Sprintf("%s", etype)
 	}

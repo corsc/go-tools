@@ -6,18 +6,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetMethods(t *testing.T) {
+func TestGetMethods_HappyPath(t *testing.T) {
 	src := `package test
 
 type myType interface {
-	LoadByID(ctx context.Context, id int64) myType
-
+	LoadByID(ctx context.Context, id int64) bool
+}
 `
 	srcAST := getASTFromSrc(src)
 
 	result := GetMethods(srcAST, "myType")
 
-	expected1 := []Method{
+	expected := []Method{
 		{
 			Name: "LoadByID",
 			Params: []MethodField{
@@ -33,11 +33,30 @@ type myType interface {
 			Results: []MethodField{
 				{
 					[]string{},
-					"myType",
+					"bool",
 				},
 			},
 		},
 	}
 
-	assert.Equal(t, expected1, result)
+	assert.Equal(t, expected, result)
+}
+
+func TestGetMethods_None(t *testing.T) {
+	src := `package test
+
+type myInterface interface {
+	LoadByID(ctx context.Context, id int64) bool
+}
+
+type myStruct struct {}
+
+`
+	srcAST := getASTFromSrc(src)
+
+	result := GetMethods(srcAST, "myStruct")
+
+	expected := []Method{}
+
+	assert.Equal(t, expected, result)
 }

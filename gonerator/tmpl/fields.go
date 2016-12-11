@@ -9,9 +9,10 @@ import (
 
 // Field ...
 type Field struct {
-	Name string
-	Type string
-	Tags map[string]string
+	Name         string
+	Type         string
+	NonArrayType string
+	Tags         map[string]string
 
 	Fields []Field
 }
@@ -39,12 +40,17 @@ func GetFields(file *ast.File, typeName string) []Field {
 
 					case *ast.StructType:
 						for _, field := range sType.Fields.List {
-							name := field.Names[0].Name
+							var name string
+							//  nil if anonymous field
+							if field.Names != nil {
+								name = field.Names[0].Name
+							}
 							typeName := getTypeString(field.Type)
 
 							thisField := Field{
-								Name: name,
-								Type: typeName,
+								Name:         name,
+								Type:         typeName,
+								NonArrayType: strings.TrimPrefix(typeName, "[]"),
 							}
 
 							if field.Tag != nil {
@@ -53,7 +59,7 @@ func GetFields(file *ast.File, typeName string) []Field {
 							}
 
 							// process for custom structs
-							subFields := GetFields(file, typeName)
+							subFields := GetFields(file, thisField.NonArrayType)
 							if len(subFields) > 0 {
 								thisField.Fields = subFields
 							}

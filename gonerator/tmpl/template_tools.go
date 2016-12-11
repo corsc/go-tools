@@ -7,10 +7,16 @@ import (
 	"text/template"
 )
 
+const (
+	invalidStr = "invalid"
+)
+
 // TemplateData is the data structure passed to the template engine
 type TemplateData struct {
-	TypeName    string
-	PackageName string
+	TypeName     string
+	PackageName  string
+	TemplateFile string
+	OutputFile   string
 
 	Fields  []Field
 	Extras  []string
@@ -21,7 +27,7 @@ type TemplateData struct {
 func Generate(buffer *bytes.Buffer, data TemplateData, templateContent string) {
 	masterTmpl, err := getTemplate().Parse(templateContent)
 	if err != nil {
-		log.Fatalf("eror whil parsing template: %s", err)
+		log.Fatalf("error while parsing template: %s", err)
 	}
 	err = masterTmpl.Execute(buffer, data)
 	if err != nil {
@@ -35,14 +41,19 @@ func getTemplate() *template.Template {
 
 func getFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"isNotFirst": isNotFirst,
-		"isNotLast":  isNotLast,
-		"firstLower": firstLower,
-		"firstUpper": strings.Title,
-		"pbEncode":   pbEncode,
-		"pbDecode":   pbDecode,
-		"toUpper":    strings.ToUpper,
-		"toLower":    strings.ToLower,
+		"isNotFirst":     isNotFirst,
+		"isNotLast":      isNotLast,
+		"firstLower":     firstLower,
+		"firstUpper":     strings.Title,
+		"toUpper":        strings.ToUpper,
+		"toLower":        strings.ToLower,
+		"isSlice":        isSlice,
+		"sliceType":      sliceType,
+		"isMap":          isMap,
+		"add":            add,
+		"paramsWithType": paramsWithType,
+		"paramsNoType":   paramsNoType,
+		"hasField":       hasField,
 	}
 }
 
@@ -64,31 +75,69 @@ func firstLower(typeName string) string {
 	return strings.ToLower(typeName[:1]) + typeName[1:]
 }
 
-// Decode helper for Protobuf
-func pbDecode(field Field, prefix string) string {
-	fieldName := field.Name
-	if custom, found := field.Tags["pbName"]; found {
-		fieldName = custom
-	}
-
-	// Special processing for things like Enum types
-	switch field.Type {
-	case "time.Time":
-		return "time.Unix(0, " + prefix + fieldName + ")"
-
-	default:
-		return prefix + fieldName
-	}
+func isSlice(field Field) bool {
+	return strings.HasPrefix(field.Type, "[]")
 }
 
-// Encode helper for Protobuf
-func pbEncode(field Field, prefix string) string {
-	// Special processing for things like Enum types
-	switch field.Type {
-	case "time.Time":
-		return prefix + field.Name + ".UnixNano()"
-
-	default:
-		return prefix + field.Name
+func sliceType(field Field) string {
+	if !isSlice(field) {
+		return invalidStr
 	}
+
+	return strings.Replace(field.Type, "[]", "", 1)
+}
+
+func isMap(field Field) bool {
+	return strings.Contains(field.Type, "map")
+}
+
+func add(inputs ...interface{}) int64 {
+	var output int64
+	for _, value := range inputs {
+		switch concreteValue := value.(type) {
+		case int:
+			output += int64(concreteValue)
+
+		case int64:
+			output += concreteValue
+
+		case int32:
+			output += int64(concreteValue)
+		}
+	}
+	return output
+}
+
+func paramsWithType(method Method) string {
+	return paramsList(method, true)
+}
+
+func paramsNoType(method Method) string {
+	return paramsList(method, false)
+}
+
+func paramsList(method Method, includeType bool) string {
+	output := ""
+
+	for outerIndex, param := range method.Params {
+		for innerIndex, name := range param.Names {
+			output += name + isNotLast(len(param.Names), innerIndex, ", ")
+		}
+		if includeType {
+			output += " " + param.Type
+		}
+		output += isNotLast(len(method.Params), outerIndex, ", ")
+	}
+
+	return output
+}
+
+func hasField(fields []Field, fieldName string) bool {
+	for _, thisField := range fields {
+		if thisField.Name == fieldName {
+			return true
+		}
+	}
+
+	return false
 }

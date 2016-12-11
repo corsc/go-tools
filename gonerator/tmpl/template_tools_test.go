@@ -3,7 +3,6 @@ package tmpl
 import (
 	"bytes"
 	"log"
-
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,47 +36,77 @@ func TestFieldsAsList(t *testing.T) {
 	assert.Equal(t, "row.Scan(&in.ID, &in.Name, &in.Balance)", buffer.String())
 }
 
-func TestIsNotLastAndIsNotFirst(t *testing.T) {
+func TestIsNotLast(t *testing.T) {
 	scenarios := []struct {
-		desc               string
-		len                int
-		index              int
-		insert             string
-		expectedIsNotFirst string
-		expectedIsNotLast  string
+		desc     string
+		len      int
+		index    int
+		insert   string
+		expected string
 	}{
 		{
-			desc:               "empty list",
-			len:                0,
-			index:              0,
-			insert:             "BAR",
-			expectedIsNotFirst: "BAR",
-			expectedIsNotFirst: "",
+			desc:     "empty list",
+			len:      0,
+			index:    0,
+			insert:   "FU",
+			expected: "FU",
 		},
 		{
-			desc:               "last",
-			len:                6,
-			index:              5,
-			insert:             "BAR",
-			expectedIsNotFirst: "",
-			expectedIsNotLast:  "",
+			desc:     "last",
+			len:      3,
+			index:    2,
+			insert:   "FU",
+			expected: "",
 		},
 		{
-			desc:               "not last",
-			len:                33,
-			index:              22,
-			insert:             "FU",
-			expectedIsNotFirst: "FU",
-			expectedIsNotLast:  "FU",
+			desc:     "not last",
+			len:      3,
+			index:    1,
+			insert:   "FU",
+			expected: "FU",
 		},
 	}
 
 	for _, scenario := range scenarios {
-		resultIsNotLast := isNotLast(scenario.len, scenario.index, scenario.insert)
-		assert.Equal(t, scenario.expectedIsNotLast, resultIsNotLast, scenario.desc)
+		result := isNotLast(scenario.len, scenario.index, scenario.insert)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
+	}
+}
 
-		resultIsNotFirst := isNotFirst(scenario.len, scenario.index, scenario.insert)
-		assert.Equal(t, scenario.expectedIsNotFirst, resultIsNotFirst, scenario.desc)
+func TestIsNotFirst(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		len      int
+		index    int
+		insert   string
+		expected string
+	}{
+		{
+			desc:     "empty list",
+			len:      0,
+			index:    0,
+			insert:   "FU",
+			expected: "",
+		},
+		{
+			desc:     "first",
+			len:      3,
+			index:    0,
+			insert:   "FU",
+			expected: "",
+		},
+		{
+			desc:     "not first",
+			len:      3,
+			index:    2,
+			insert:   "FU",
+			expected: "FU",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		result := isNotFirst(scenario.len, scenario.index, scenario.insert)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
 }
 
@@ -108,4 +137,104 @@ func TestFirstLower(t *testing.T) {
 		result := firstLower(scenario.input)
 		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
+}
+
+func TestIsSlice_TDT(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		in       Field
+		expected bool
+	}{
+		{
+			desc: "Is slice",
+			in: Field{
+				Name: "Fu",
+				Type: "[]Fus",
+			},
+			expected: true,
+		},
+		{
+			desc: "Is NOT slice",
+			in: Field{
+				Name: "Bar",
+				Type: "string",
+			},
+			expected: false,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		result := isSlice(scenario.in)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
+	}
+}
+
+func TestIsMap_TDT(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		in       Field
+		expected bool
+	}{
+		{
+			desc: "Is map",
+			in: Field{
+				Name: "Fu",
+				Type: "map[string]Fus",
+			},
+			expected: true,
+		},
+		{
+			desc: "Is NOT map",
+			in: Field{
+				Name: "Bar",
+				Type: "string",
+			},
+			expected: false,
+		},
+	}
+
+	for _, scenario := range scenarios {
+		result := isMap(scenario.in)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
+	}
+}
+
+func TestParamsWithType(t *testing.T) {
+	expected := "a, b int, c string"
+	method := Method{
+		Name: "fubar",
+		Params: []MethodField{
+			{
+				Names: []string{"a", "b"},
+				Type:  "int",
+			},
+			{
+				Names: []string{"c"},
+				Type:  "string",
+			},
+		},
+	}
+
+	result := paramsWithType(method)
+	assert.Equal(t, expected, result)
+}
+
+func TestParamsNoType(t *testing.T) {
+	expected := "a, b, c"
+	method := Method{
+		Name: "fubar",
+		Params: []MethodField{
+			{
+				Names: []string{"a", "b"},
+				Type:  "int",
+			},
+			{
+				Names: []string{"c"},
+				Type:  "string",
+			},
+		},
+	}
+
+	result := paramsNoType(method)
+	assert.Equal(t, expected, result)
 }
