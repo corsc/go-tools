@@ -87,7 +87,7 @@ func main() {
 		fmt.Print(buffer.String())
 	}
 
-	if webHook == "" {
+	if webHook != "" {
 		if singleDir {
 			parser.SlackCoverageSingle(path, webHook, prefix, depth)
 		} else {
