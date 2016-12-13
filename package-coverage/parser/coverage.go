@@ -8,11 +8,12 @@ import (
 )
 
 // get coverage using the paths and exclusions supplied
-func getCoverageData(paths []string, dirMatcher *regexp.Regexp) ([]string, coverageByPackage) {
+func getCoverageData(paths []string, exclusionsMatcher *regexp.Regexp) ([]string, coverageByPackage) {
 	var contents string
 	for _, path := range paths {
-		if dirMatcher.FindString(path) != "" {
-			log.Printf("Printing of coverage for path '%s' skipped due to skipDir regex '%s'", path, dirMatcher.String())
+		if exclusionsMatcher.FindString(path) != "" {
+			log.Printf("Printing of coverage for path '%s' skipped due to exclusions regex '%s'",
+				path, exclusionsMatcher.String())
 			continue
 		}
 

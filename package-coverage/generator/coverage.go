@@ -20,15 +20,16 @@ const coverageFilename = "profile.cov"
 
 var fakeTestFilename = "fake_test.go"
 
-func processAllDirs(basePath string, matcher *regexp.Regexp, logTag string, actionFunc func(string)) {
+func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag string, actionFunc func(string)) {
 	paths, err := utils.FindAllGoDirs(basePath)
 	if err != nil {
 		return
 	}
 
 	for _, path := range paths {
-		if matcher.FindString(path) != "" {
-			utils.LogWhenVerbose("[%s] path '%s' skipped due to skipDir regex '%s'", logTag, path, matcher.String())
+		if exclusionsMatcher.FindString(path) != "" {
+			utils.LogWhenVerbose("[%s] path '%s' skipped due to skipDir regex '%s'",
+				logTag, path, exclusionsMatcher.String())
 			continue
 		}
 
@@ -37,9 +38,8 @@ func processAllDirs(basePath string, matcher *regexp.Regexp, logTag string, acti
 	}
 }
 
-// this function will cause the generation of test coverage for the supplied directory and return the file path of the
-// resultant coverage file
-func generateCoverage(path string, fileMatcher *regexp.Regexp, goTestArgs []string) {
+// this function will generate the test coverage for the supplied directory
+func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, goTestArgs []string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
@@ -50,11 +50,11 @@ func generateCoverage(path string, fileMatcher *regexp.Regexp, goTestArgs []stri
 		log.Printf("error generating coverage %s", err)
 	}
 
-	if fileMatcher == nil {
+	if exclusionsMatcher == nil {
 		return
 	}
 
-	err = filterCoverage(filepath.Join(path, coverageFilename), fileMatcher)
+	err = filterCoverage(filepath.Join(path, coverageFilename), exclusionsMatcher)
 	if err != nil {
 		log.Printf("error filtering files: %s", err)
 	}
@@ -155,7 +155,7 @@ var execCoverage = func(dir, coverageFilename string, goTestArgs []string) error
 	return nil
 }
 
-func filterCoverage(coverageFilename string, fileMatcher *regexp.Regexp) error {
+func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) error {
 	coverageTempFilename := coverageFilename + "~"
 
 	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0644)
@@ -187,7 +187,7 @@ func filterCoverage(coverageFilename string, fileMatcher *regexp.Regexp) error {
 		fileNameEndIndex := strings.LastIndex(line, ":")
 		fileName := line[:fileNameEndIndex]
 
-		if fileMatcher.MatchString(fileName) {
+		if exclusionsMatcher.MatchString(fileName) {
 			continue
 		}
 

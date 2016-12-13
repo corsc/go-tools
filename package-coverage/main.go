@@ -24,21 +24,19 @@ func main() {
 	singleDir := false
 	clean := false
 	print := false
-	ignoreDirs := ""
-	ignoreFiles := ""
+	ignorePaths := ""
 	webHook := ""
 	prefix := ""
 	depth := 0
 	minCoverage := 0
-	var dirMatcher, fileExclusions *regexp.Regexp
+	var exclusionsMatcher *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
-	flag.StringVar(&ignoreDirs, "i", `./\.git.*|./_.*`, "ignore regex specified directory")
-	flag.StringVar(&ignoreFiles, "j", ``, "ignore regex files")
+	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes)")
 	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output (currently only supported by Slack output)")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all) (currently only supported by Slack output)")
@@ -53,18 +51,15 @@ func main() {
 	path := getPath()
 	goTestArgs := getGoTestArguments()
 
-	if ignoreDirs != "" {
-		dirMatcher = regexp.MustCompile(ignoreDirs)
-	}
-	if ignoreFiles != "" {
-		fileExclusions = regexp.MustCompile(ignoreFiles)
+	if ignorePaths != "" {
+		exclusionsMatcher = regexp.MustCompile(ignorePaths)
 	}
 
 	if coverage {
 		if singleDir {
-			generator.CoverageSingle(path, fileExclusions, goTestArgs)
+			generator.CoverageSingle(path, exclusionsMatcher, goTestArgs)
 		} else {
-			generator.Coverage(path, dirMatcher, fileExclusions, goTestArgs)
+			generator.Coverage(path, exclusionsMatcher, goTestArgs)
 		}
 	}
 
@@ -81,7 +76,7 @@ func main() {
 		if singleDir {
 			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage)
 		} else {
-			coverageOk = parser.PrintCoverage(&buffer, path, dirMatcher, minCoverage)
+			coverageOk = parser.PrintCoverage(&buffer, path, exclusionsMatcher, minCoverage)
 		}
 
 		fmt.Print(buffer.String())
@@ -91,7 +86,7 @@ func main() {
 		if singleDir {
 			parser.SlackCoverageSingle(path, webHook, prefix, depth)
 		} else {
-			parser.SlackCoverage(path, dirMatcher, webHook, prefix, depth)
+			parser.SlackCoverage(path, exclusionsMatcher, webHook, prefix, depth)
 		}
 	}
 
@@ -99,7 +94,7 @@ func main() {
 		if singleDir {
 			generator.CleanSingle(path)
 		} else {
-			generator.Clean(path, dirMatcher)
+			generator.Clean(path, exclusionsMatcher)
 		}
 	}
 
