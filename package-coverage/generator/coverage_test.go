@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -117,4 +118,40 @@ func assertFileExists(t *testing.T, path string) {
 func assertFileNotExists(t *testing.T, path string) {
 	_, err := os.OpenFile(path, os.O_RDONLY, 0666)
 	assert.True(t, os.IsNotExist(err))
+}
+
+func TestFilterCoverage(t *testing.T) {
+	const (
+		sampleCoverageFile = `github.com/corsc/go-tools/package-coverage/generator/generator.go:9.87,10.76 1 0
+github.com/corsc/go-tools/package-coverage/generator/generator.go:10.76,12.3 1 0
+github.com/corsc/go-tools/package-coverage/generator/generator.go:16.93,18.2 1 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:13.63,15.2 1 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:18.31,20.2 1 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:22.25,25.2 2 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:28.42,29.45 1 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:29.45,33.17 3 0
+github.com/corsc/go-tools/package-coverage/generator/clean.go:33.17,35.4 1 0
+`
+		filteredCoverageFile = `github.com/corsc/go-tools/package-coverage/generator/generator.go:9.87,10.76 1 0
+github.com/corsc/go-tools/package-coverage/generator/generator.go:10.76,12.3 1 0
+github.com/corsc/go-tools/package-coverage/generator/generator.go:16.93,18.2 1 0
+`
+		tempCoverageFilePath = "test-profile.cov"
+	)
+
+	tempCoverageFile, err := os.OpenFile(tempCoverageFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+	assert.NoError(t, err)
+	defer os.Remove(tempCoverageFilePath)
+	_, err = tempCoverageFile.WriteString(sampleCoverageFile)
+	assert.NoError(t, err)
+	err = tempCoverageFile.Close()
+	assert.NoError(t, err)
+
+	exclusionsMatcher := regexp.MustCompile(`/clean\.go`)
+	err = filterCoverage(tempCoverageFilePath, exclusionsMatcher)
+	assert.NoError(t, err)
+
+	actualCoverageFile, err := ioutil.ReadFile(tempCoverageFilePath)
+	assert.NoError(t, err)
+	assert.Equal(t, filteredCoverageFile, string(actualCoverageFile))
 }
