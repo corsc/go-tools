@@ -38,7 +38,7 @@ func main() {
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
 	flag.StringVar(&ignoreDirs, "i", `./\.git.*|./_.*`, "ignore regex specified directory")
-	flag.StringVar(&ignoreFiles, "j", `mock.*\.go`, "ignore regex files")
+	flag.StringVar(&ignoreFiles, "j", ``, "ignore regex files")
 	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output (currently only supported by Slack output)")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all) (currently only supported by Slack output)")
