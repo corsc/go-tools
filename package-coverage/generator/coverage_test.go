@@ -3,6 +3,9 @@ package generator
 import (
 	"log"
 	"os"
+	"regexp"
+	"sort"
+	"strings"
 	"testing"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
@@ -12,6 +15,39 @@ import (
 func init() {
 	// change test file so that it doesn't overlap when using this tool on itself
 	fakeTestFilename = "my-fake-test.go"
+}
+
+func TestProcessAllDirs(t *testing.T) {
+	dir := strings.TrimSuffix(utils.GetCurrentDir(), "/generator/")
+	tests := []struct {
+		Name    string
+		Exclude string
+		Result  []string
+	}{
+		{
+			Name:    "excludesDir",
+			Exclude: `/excluded/`,
+			Result: []string{
+				dir + "/tests/fixtures/path_matcher/",
+				dir + "/tests/fixtures/path_matcher/included/",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			matcher := regexp.MustCompile(test.Exclude)
+			matched := []string{}
+			processAllDirs("../tests/fixtures/path_matcher", matcher, "processAllDirs", func(path string) {
+				matched = append(matched, path)
+			})
+
+			sort.Strings(test.Result)
+			sort.Strings(matched)
+			assert.Equal(t, test.Result, matched, "expected processed files to match")
+		})
+	}
+
 }
 
 func TestAddFakeTest_HappyPath(t *testing.T) {
