@@ -36,7 +36,7 @@ func main() {
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
 	flag.BoolVar(&clean, "d", false, "clean")
 	flag.BoolVar(&print, "p", false, "print coverage to stdout")
-	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes)")
+	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes; match files by prefixing with a slash)")
 	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output (currently only supported by Slack output)")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all) (currently only supported by Slack output)")
