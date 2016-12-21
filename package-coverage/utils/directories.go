@@ -28,10 +28,13 @@ func FindAllCoverageFiles(basePath string) ([]string, error) {
 func finder(basePath string, searchFor mode) ([]string, error) {
 	found := []string{}
 
+	oldCurrentDirectory := GetCurrentDir()
 	err := os.Chdir(basePath)
 	if err != nil {
 		return nil, err
 	}
+
+	defer os.Chdir(oldCurrentDirectory)
 
 	_ = filepath.Walk("./", func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {

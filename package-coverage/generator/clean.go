@@ -10,8 +10,8 @@ import (
 
 // Clean will search the supplied directory and any sub-directories that contain Go files and remove any
 // existing coverage files
-func Clean(basePath string, matcher *regexp.Regexp) {
-	processAllDirs(basePath, matcher, "clean", clean)
+func Clean(basePath string, exclusionsMatcher *regexp.Regexp) {
+	processAllDirs(basePath, exclusionsMatcher, "clean", clean)
 }
 
 // CleanSingle will search the supplied directory that contain Go files and remove any existing coverage file

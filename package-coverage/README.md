@@ -8,7 +8,7 @@ This tool intents to calculate the test coverage of a particular package (includ
 * `$ package-coverage -v` is useful for debugging as it will print to std out a trace of what it is doing
 * `$ package-coverage -s` will switch this tool into "single directory" mode (will not recurse down the file tree)
 * `$ package-coverage -webhook=https://hooks.slack.com/services/fu/bar` will print the coverage information to Slack using the supplied webbook
-* `$ package-coverage -i="_generated/"` defines a regex of directories that should be excluded from coverage (useful for generated code)
+* `$ package-coverage -i="/_generated/|/z_.*"` defines a regex of paths that should be excluded from coverage (useful for generated code). Match directories by surrounding with slashes; match files by prefixing with a slash.
 * `$ package-coverage -p -prefix="github.com/corsc/"` this string will removed from the front of any outputted package names (current only supported by the slack output)
 * `$ package-coverage -slack -depth=1` how many levels to output.  This does not effect the calculation only the output. (current only supported by the slack output)
 * `$ package-coverage -p -m=1` will highlight (in red) the console output of any packages below the supplied number (current only supported console output)
