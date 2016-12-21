@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -180,7 +181,23 @@ func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) e
 		}
 	}()
 
-	coverageFileScanner := bufio.NewScanner(coverageFile)
+	if err := filterCoverageContents(exclusionsMatcher, coverageFile, coverageTempFile); err != nil {
+		return err
+	}
+
+	if err := os.Remove(coverageFilename); err != nil {
+		log.Printf("cannot remove old coverage file %s: %v", coverageFilename, err)
+	}
+
+	if err := os.Rename(coverageTempFilename, coverageFilename); err != nil {
+		log.Printf("cannot rename filtered coverage file %s: %v", coverageTempFilename, err)
+	}
+
+	return nil
+}
+
+func filterCoverageContents(exclusionsMatcher *regexp.Regexp, in io.Reader, out io.Writer) error {
+	coverageFileScanner := bufio.NewScanner(in)
 	for coverageFileScanner.Scan() {
 		line := coverageFileScanner.Text()
 
@@ -191,17 +208,9 @@ func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) e
 			continue
 		}
 
-		if _, err := fmt.Fprintln(coverageTempFile, line); err != nil {
+		if _, err := fmt.Fprintln(out, line); err != nil {
 			return err
 		}
-	}
-
-	if err := os.Remove(coverageFilename); err != nil {
-		log.Printf("cannot remove old coverage file %s: %v", coverageFilename, err)
-	}
-
-	if err := os.Rename(coverageTempFilename, coverageFilename); err != nil {
-		log.Printf("cannot rename filtered coverage file %s: %v", coverageTempFilename, err)
 	}
 
 	return nil
