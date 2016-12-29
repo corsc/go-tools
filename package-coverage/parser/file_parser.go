@@ -1,9 +1,10 @@
 package parser
 
 import (
-	"log"
 	"regexp"
 	"strings"
+
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // coverage data line format (used to filter out the rest of the coverage file contents)
@@ -25,7 +26,7 @@ func parseLines(raw string) map[string]*coverage {
 
 	lines := strings.Split(raw, "\n")
 	if len(lines) == 0 {
-		log.Print("no lines found in the supplied file")
+		utils.LogWhenVerbose("[print] no lines found in the supplied file")
 		return output
 	}
 

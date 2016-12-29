@@ -2,12 +2,13 @@ package generator
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
+
+	"log"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 	"github.com/stretchr/testify/assert"
@@ -106,7 +107,7 @@ func TestRemoveFakeTest(t *testing.T) {
 func removeTestFile(path string) {
 	err := os.Remove(path)
 	if err != nil {
-		log.Printf("error while removing test file %s", err)
+		log.Panicf("error while removing test file %s", err)
 	}
 }
 

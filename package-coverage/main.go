@@ -20,6 +20,7 @@ func main() {
 	}()
 
 	verbose := false
+	quiet := true
 	coverage := false
 	singleDir := false
 	clean := false
@@ -29,9 +30,10 @@ func main() {
 	prefix := ""
 	depth := 0
 	minCoverage := 0
-	var exclusionsMatcher *regexp.Regexp
+	var exclusions *regexp.Regexp
 
-	flag.BoolVar(&verbose, "v", false, "verbose mode")
+	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
+	flag.BoolVar(&quiet, "n", true, "quiet mode will supress the stdOut messages from go test")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
 	flag.BoolVar(&clean, "d", false, "clean")
@@ -43,23 +45,39 @@ func main() {
 	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
 	flag.Parse()
 
-	if !verbose {
-		utils.VerboseOff()
-	}
-
 	startDir := utils.GetCurrentDir()
 	path := getPath()
 	goTestArgs := getGoTestArguments()
 
+	if verbose {
+		utils.LogWhenVerbose("Config:")
+		utils.LogWhenVerbose("Verbose: %v", verbose)
+		utils.LogWhenVerbose("Quiet: %v", quiet)
+		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
+		utils.LogWhenVerbose("Single Directory: %v", singleDir)
+		utils.LogWhenVerbose("Clean: %v", clean)
+		utils.LogWhenVerbose("Print Coverage: %v", print)
+		utils.LogWhenVerbose("Ignore Regex: %v", ignorePaths)
+		utils.LogWhenVerbose("Slack WebHook: %v", webHook)
+		utils.LogWhenVerbose("Prefix: %v", prefix)
+		utils.LogWhenVerbose("Depth: %v", depth)
+		utils.LogWhenVerbose("Min Coverage: %v", minCoverage)
+		utils.LogWhenVerbose("Start Dir: %v", startDir)
+		utils.LogWhenVerbose("Path: %v", path)
+		utils.LogWhenVerbose("Go Test Args: %v", goTestArgs)
+	} else {
+		utils.VerboseOff()
+	}
+
 	if ignorePaths != "" {
-		exclusionsMatcher = regexp.MustCompile(ignorePaths)
+		exclusions = regexp.MustCompile(ignorePaths)
 	}
 
 	if coverage {
 		if singleDir {
-			generator.CoverageSingle(path, exclusionsMatcher, goTestArgs)
+			generator.CoverageSingle(path, exclusions, quiet, goTestArgs)
 		} else {
-			generator.Coverage(path, exclusionsMatcher, goTestArgs)
+			generator.Coverage(path, exclusions, quiet, goTestArgs)
 		}
 	}
 
@@ -76,7 +94,7 @@ func main() {
 		if singleDir {
 			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage)
 		} else {
-			coverageOk = parser.PrintCoverage(&buffer, path, exclusionsMatcher, minCoverage)
+			coverageOk = parser.PrintCoverage(&buffer, path, exclusions, minCoverage)
 		}
 
 		fmt.Print(buffer.String())
@@ -86,15 +104,16 @@ func main() {
 		if singleDir {
 			parser.SlackCoverageSingle(path, webHook, prefix, depth)
 		} else {
-			parser.SlackCoverage(path, exclusionsMatcher, webHook, prefix, depth)
+			parser.SlackCoverage(path, exclusions, webHook, prefix, depth)
 		}
 	}
 
 	if clean {
+		cleaner := generator.NewCleaner()
 		if singleDir {
-			generator.CleanSingle(path)
+			cleaner.Single(path)
 		} else {
-			generator.Clean(path, exclusionsMatcher)
+			cleaner.Recursive(path, exclusions)
 		}
 	}
 

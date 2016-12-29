@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -27,7 +27,7 @@ func parseLine(raw string) fragment {
 func extractPackage(raw string) string {
 	lastSlash := strings.LastIndex(raw, "/")
 	if lastSlash == -1 {
-		panic(fmt.Errorf("line skipped due to lack of package '%s'", raw))
+		log.Panicf("line skipped due to lack of package '%s'", raw)
 	}
 
 	return raw[:(lastSlash + 1)]
@@ -36,13 +36,13 @@ func extractPackage(raw string) string {
 func extractFile(raw string) string {
 	lastSlash := strings.LastIndex(raw, "/")
 	if lastSlash == -1 {
-		panic(fmt.Errorf("line skipped due to lack of package '%s'", raw))
+		log.Panicf("line skipped due to lack of package '%s'", raw)
 	}
 
 	fileAndLines := raw[(lastSlash + 1):]
 	line := strings.LastIndex(fileAndLines, ":")
 	if line == -1 {
-		panic(fmt.Errorf("line skipped due to lack of line number '%s'", raw))
+		log.Panicf("line skipped due to lack of line number '%s'", raw)
 	}
 
 	return fileAndLines[:line]
@@ -51,7 +51,7 @@ func extractFile(raw string) string {
 func extractNumbers(raw string) (int, bool) {
 	parts := strings.Split(raw, " ")
 	if len(parts) != 3 {
-		panic(fmt.Errorf("invalid line format. parts found %d, expected 3", len(parts)))
+		log.Panicf("invalid line format. parts found %d, expected 3", len(parts))
 	}
 
 	lines := extractStatements(parts[1])

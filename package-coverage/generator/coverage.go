@@ -2,12 +2,10 @@ package generator
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -40,15 +38,15 @@ func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag st
 }
 
 // this function will generate the test coverage for the supplied directory
-func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, goTestArgs []string) {
+func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, quiet bool, goTestArgs []string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
 	defer removeFakeTest(fakeTestFile)
 
-	err := execCoverage(path, coverageFilename, goTestArgs)
+	err := execCoverage(path, coverageFilename, quiet, goTestArgs)
 	if err != nil {
-		log.Printf("error generating coverage %s", err)
+		utils.LogWhenVerbose("[coverage] error generating coverage %s", err)
 	}
 
 	if exclusionsMatcher == nil {
@@ -57,7 +55,7 @@ func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, goTestArgs 
 
 	err = filterCoverage(filepath.Join(path, coverageFilename), exclusionsMatcher)
 	if err != nil {
-		log.Printf("error filtering files: %s", err)
+		utils.LogWhenVerbose("[coverage] error filtering files: %s", err)
 	}
 }
 
@@ -79,7 +77,7 @@ func findPackageName(path string) string {
 	fileSet := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fileSet, path, nil, 0)
 	if err != nil {
-		log.Printf("err while parsing the '%s' into Go AST Err: '%s", path, err)
+		utils.LogWhenVerbose("[coverage] err while parsing the '%s' into Go AST Err: '%s", path, err)
 		return UnknownPackage
 	}
 
@@ -91,16 +89,16 @@ func findPackageName(path string) string {
 
 // create a fake test so that all directories are guaranteed to contain tests (and therefore coverage will be generated)
 func createTestFile(packageName string, testFilename string) {
-	utils.LogWhenVerbose("created test for package %s file @ %s", packageName, testFilename)
+	utils.LogWhenVerbose("[coverage] created test for package %s file @ %s", packageName, testFilename)
 
 	if _, err := os.Stat(testFilename); err == nil {
-		utils.LogWhenVerbose("file already exists @ %s cowardly refusing to overwrite", testFilename)
+		utils.LogWhenVerbose("[coverage] file already exists @ %s cowardly refusing to overwrite", testFilename)
 		return
 	}
 
 	file, err := os.OpenFile(testFilename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
-		log.Printf("error while creating test file %s", err)
+		utils.LogWhenVerbose("[coverage] error while creating test file %s", err)
 		return
 	}
 
@@ -111,30 +109,28 @@ import "testing"
 func TestThisTestDoesntReallyTestAnything(t *testing.T) {}
 `)
 	if err != nil {
-		log.Printf("error while writing test file %s", err)
+		utils.LogWhenVerbose("[coverage] error while writing test file %s", err)
 		return
 	}
 
 	err = file.Close()
 	if err != nil {
-		log.Printf("error while closing file '%s", err)
+		utils.LogWhenVerbose("[coverage] error while closing file '%s", err)
 	}
 }
 
 // remove the previously added fake test (i.e. clean up)
 func removeFakeTest(filename string) {
-	utils.LogWhenVerbose("remove test file @ %s", filename)
+	utils.LogWhenVerbose("[coverage] remove test file @ %s", filename)
 
 	err := os.Remove(filename)
 	if err != nil {
-		log.Printf("error while removing test file @ %s, err: %s", filename, err)
+		utils.LogWhenVerbose("[coverage] error while removing test file @ %s, err: %s", filename, err)
 	}
 }
 
 // essentially call `go test` to generate the coverage
-var execCoverage = func(dir, coverageFilename string, goTestArgs []string) error {
-	var stdErr bytes.Buffer
-
+func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string) error {
 	command := "go"
 	arguments := []string{
 		"test",
@@ -145,14 +141,19 @@ var execCoverage = func(dir, coverageFilename string, goTestArgs []string) error
 
 	cmd := exec.Command(command, arguments...)
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = &stdErr
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("error while running go test. stdErr: %s\nerr: %s", stdErr.String(), err)
+	out, err := cmd.Output()
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while running go test. err: %s", err)
 		return err
 	}
-	utils.LogWhenVerbose("created coverage file @ %s%s", dir, coverageFilename)
+
+	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
+
+	if !quiet {
+		utils.LogWhenVerbose("[coverage] go test output: \n %s", out)
+	}
+
 	return nil
 }
 
@@ -161,36 +162,39 @@ func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) e
 
 	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while opening file %s, err: %s", coverageTempFilename, err)
 		return err
 	}
 
 	defer func() {
 		if err := coverageTempFile.Close(); err != nil {
-			panic(fmt.Errorf("cannot close temporary file %s: %v", coverageTempFilename, err))
+			utils.LogWhenVerbose("[coverage] cannot close temporary file %s: %s", coverageTempFilename, err)
 		}
 	}()
 
 	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
 	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while openning file %s, err: %s", coverageFilename, err)
 		return err
 	}
 
 	defer func() {
 		if err := coverageFile.Close(); err != nil {
-			panic(fmt.Errorf("Cannot close coverage file %s: %v", coverageFilename, err))
+			utils.LogWhenVerbose("[coverage] Cannot close coverage file %s: %s", coverageFilename, err)
 		}
 	}()
 
 	if err := filterCoverageContents(exclusionsMatcher, coverageFile, coverageTempFile); err != nil {
+		utils.LogWhenVerbose("[coverage] error while filtering coverage file %s: %s", coverageFilename, err)
 		return err
 	}
 
 	if err := os.Remove(coverageFilename); err != nil {
-		log.Printf("cannot remove old coverage file %s: %v", coverageFilename, err)
+		utils.LogWhenVerbose("[coverage] cannot remove old coverage file %s: %s", coverageFilename, err)
 	}
 
 	if err := os.Rename(coverageTempFilename, coverageFilename); err != nil {
-		log.Printf("cannot rename filtered coverage file %s: %v", coverageTempFilename, err)
+		utils.LogWhenVerbose("[coverage] cannot rename filtered coverage file %s: %s", coverageTempFilename, err)
 	}
 
 	return nil
