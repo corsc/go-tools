@@ -142,17 +142,18 @@ func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string)
 	cmd := exec.Command(command, arguments...)
 	cmd.Dir = dir
 
-	out, err := cmd.Output()
+	if !quiet {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+
+	err := cmd.Run()
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while running go test. err: %s", err)
 		return err
 	}
 
 	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
-
-	if !quiet {
-		print(string(out))
-	}
 
 	return nil
 }
