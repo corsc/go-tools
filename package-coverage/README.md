@@ -3,6 +3,7 @@ This tool intents to calculate the test coverage of a particular package (includ
 ## Command line options:
 
 * `$ package-coverage -c ./` will generate coverage.  1 coverage file (*.cov) per package
+* `$ package-coverage -c -q=false ./` generate coverage and also output os.Stdout and os.Stderr from "go test"
 * `$ package-coverage -d ./` will remove any previous coverage files (will remove all *.cov files)
 * `$ package-coverage -p ./` will import all coverage files under the supplied dir and output the summary.
 * `$ package-coverage -v` is useful for debugging as it will print to std out a trace of what it is doing

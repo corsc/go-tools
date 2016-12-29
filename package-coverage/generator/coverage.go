@@ -151,7 +151,7 @@ func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string)
 	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
 
 	if !quiet {
-		utils.LogWhenVerbose("[coverage] go test output: \n %s", out)
+		print(string(out))
 	}
 
 	return nil
