@@ -2,9 +2,10 @@ package parser
 
 import (
 	"io/ioutil"
-	"log"
 	"regexp"
 	"sort"
+
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // get coverage using the paths and exclusions supplied
@@ -12,7 +13,7 @@ func getCoverageData(paths []string, exclusionsMatcher *regexp.Regexp) ([]string
 	var contents string
 	for _, path := range paths {
 		if exclusionsMatcher.FindString(path) != "" {
-			log.Printf("Printing of coverage for path '%s' skipped due to exclusions regex '%s'",
+			utils.LogWhenVerbose("[print] Printing of coverage for path '%s' skipped due to exclusions regex '%s'",
 				path, exclusionsMatcher.String())
 			continue
 		}

@@ -102,6 +102,6 @@ func sendToSlack(webHook string, attachments string) {
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
-		panic(fmt.Sprintf("unexpected response code %d; body: %s; payload: %s", resp.StatusCode, body, message))
+		log.Panicf("unexpected response code %d; body: %s; payload: %s", resp.StatusCode, body, message)
 	}
 }

@@ -2,7 +2,6 @@ package utils
 
 import (
 	"go/build"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,7 +37,7 @@ func finder(basePath string, searchFor mode) ([]string, error) {
 
 	_ = filepath.Walk("./", func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {
-			log.Printf("failed to check path '%s' with error %s", path, err)
+			LogWhenVerbose("failed to check path '%s' with error %s", path, err)
 			return nil
 		}
 
@@ -120,7 +119,7 @@ func hiddenOrSystemDirs(pathEnd string) bool {
 func hasGoFiles(path string) bool {
 	if _, err := build.ImportDir(path, 0); err != nil {
 		if _, noGo := err.(*build.NoGoError); !noGo {
-			log.Print(err)
+			LogWhenVerbose("unexpected error parsing go files. err: %s", err)
 		}
 		return false
 	}

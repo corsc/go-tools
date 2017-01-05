@@ -36,76 +36,67 @@ func TestFieldsAsList(t *testing.T) {
 	assert.Equal(t, "row.Scan(&in.ID, &in.Name, &in.Balance)", buffer.String())
 }
 
-func TestIsNotLast(t *testing.T) {
+func TestIsOrIsNot(t *testing.T) {
 	scenarios := []struct {
-		desc     string
-		len      int
-		index    int
-		insert   string
-		expected string
+		desc          string
+		funcUnderTest func(len int, index int, insert string) string
+		len           int
+		index         int
+		insert        string
+		expected      string
 	}{
 		{
-			desc:     "empty list",
-			len:      0,
-			index:    0,
-			insert:   "FU",
-			expected: "FU",
+			desc:          "isNotLast - empty list",
+			funcUnderTest: isNotLast,
+			len:           0,
+			index:         0,
+			insert:        "FU",
+			expected:      "FU",
 		},
 		{
-			desc:     "last",
-			len:      3,
-			index:    2,
-			insert:   "FU",
-			expected: "",
+			desc:          "isNotLast - last",
+			funcUnderTest: isNotLast,
+			len:           3,
+			index:         2,
+			insert:        "FU",
+			expected:      "",
 		},
 		{
-			desc:     "not last",
-			len:      3,
-			index:    1,
-			insert:   "FU",
-			expected: "FU",
+			desc:          "isNotLast - not last",
+			funcUnderTest: isNotLast,
+			len:           3,
+			index:         1,
+			insert:        "FU",
+			expected:      "FU",
+		},
+		{
+			desc:          "isNotFirst - empty list",
+			funcUnderTest: isNotFirst,
+			len:           0,
+			index:         0,
+			insert:        "FU",
+			expected:      "",
+		},
+		{
+			desc:          "isNotFirst - first",
+			funcUnderTest: isNotFirst,
+			len:           3,
+			index:         0,
+			insert:        "FU",
+			expected:      "",
+		},
+		{
+			desc:          "isNotFirst - not first",
+			funcUnderTest: isNotFirst,
+			len:           3,
+			index:         2,
+			insert:        "FU",
+			expected:      "FU",
 		},
 	}
 
 	for _, scenario := range scenarios {
-		result := isNotLast(scenario.len, scenario.index, scenario.insert)
-		assert.Equal(t, scenario.expected, result, scenario.desc)
-	}
-}
-
-func TestIsNotFirst(t *testing.T) {
-	scenarios := []struct {
-		desc     string
-		len      int
-		index    int
-		insert   string
-		expected string
-	}{
-		{
-			desc:     "empty list",
-			len:      0,
-			index:    0,
-			insert:   "FU",
-			expected: "",
-		},
-		{
-			desc:     "first",
-			len:      3,
-			index:    0,
-			insert:   "FU",
-			expected: "",
-		},
-		{
-			desc:     "not first",
-			len:      3,
-			index:    2,
-			insert:   "FU",
-			expected: "FU",
-		},
-	}
-
-	for _, scenario := range scenarios {
-		result := isNotFirst(scenario.len, scenario.index, scenario.insert)
+		result := scenario.funcUnderTest(scenario.len, scenario.index, scenario.insert)
 		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
 }
@@ -139,14 +130,16 @@ func TestFirstLower(t *testing.T) {
 	}
 }
 
-func TestIsSlice_TDT(t *testing.T) {
+func TestIs(t *testing.T) {
 	scenarios := []struct {
-		desc     string
-		in       Field
-		expected bool
+		desc          string
+		funcUnderTest func(Field) bool
+		in            Field
+		expected      bool
 	}{
 		{
-			desc: "Is slice",
+			desc:          "Is slice",
+			funcUnderTest: isSlice,
 			in: Field{
 				Name: "Fu",
 				Type: "[]Fus",
@@ -154,29 +147,17 @@ func TestIsSlice_TDT(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "Is NOT slice",
+			desc:          "Is NOT slice",
+			funcUnderTest: isSlice,
 			in: Field{
 				Name: "Bar",
 				Type: "string",
 			},
 			expected: false,
 		},
-	}
-
-	for _, scenario := range scenarios {
-		result := isSlice(scenario.in)
-		assert.Equal(t, scenario.expected, result, scenario.desc)
-	}
-}
-
-func TestIsMap_TDT(t *testing.T) {
-	scenarios := []struct {
-		desc     string
-		in       Field
-		expected bool
-	}{
 		{
-			desc: "Is map",
+			desc:          "Is map",
+			funcUnderTest: isMap,
 			in: Field{
 				Name: "Fu",
 				Type: "map[string]Fus",
@@ -184,7 +165,8 @@ func TestIsMap_TDT(t *testing.T) {
 			expected: true,
 		},
 		{
-			desc: "Is NOT map",
+			desc:          "Is NOT map",
+			funcUnderTest: isMap,
 			in: Field{
 				Name: "Bar",
 				Type: "string",
@@ -194,47 +176,58 @@ func TestIsMap_TDT(t *testing.T) {
 	}
 
 	for _, scenario := range scenarios {
-		result := isMap(scenario.in)
+		result := scenario.funcUnderTest(scenario.in)
 		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
 }
 
-func TestParamsWithType(t *testing.T) {
-	expected := "a, b int, c string"
-	method := Method{
-		Name: "fubar",
-		Params: []MethodField{
-			{
-				Names: []string{"a", "b"},
-				Type:  "int",
+func TestParams(t *testing.T) {
+	scenarios := []struct {
+		desc          string
+		expected      string
+		method        Method
+		funcUnderTest func(method Method) string
+	}{
+		{
+			desc:     "with type",
+			expected: "a, b int, c string",
+			method: Method{
+				Name: "fubar",
+				Params: []MethodField{
+					{
+						Names: []string{"a", "b"},
+						Type:  "int",
+					},
+					{
+						Names: []string{"c"},
+						Type:  "string",
+					},
+				},
 			},
-			{
-				Names: []string{"c"},
-				Type:  "string",
+			funcUnderTest: paramsWithType,
+		},
+		{
+			desc:     "with no type",
+			expected: "a, b, c",
+			method: Method{
+				Name: "fubar",
+				Params: []MethodField{
+					{
+						Names: []string{"a", "b"},
+						Type:  "int",
+					},
+					{
+						Names: []string{"c"},
+						Type:  "string",
+					},
+				},
 			},
+			funcUnderTest: paramsNoType,
 		},
 	}
 
-	result := paramsWithType(method)
-	assert.Equal(t, expected, result)
-}
-
-func TestParamsNoType(t *testing.T) {
-	expected := "a, b, c"
-	method := Method{
-		Name: "fubar",
-		Params: []MethodField{
-			{
-				Names: []string{"a", "b"},
-				Type:  "int",
-			},
-			{
-				Names: []string{"c"},
-				Type:  "string",
-			},
-		},
+	for _, scenario := range scenarios {
+		result := scenario.funcUnderTest(scenario.method)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
-
-	result := paramsNoType(method)
-	assert.Equal(t, expected, result)
 }
