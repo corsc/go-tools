@@ -23,62 +23,81 @@ func (f Field) String() string {
 }
 
 // GetFields will extract a slice of fields from the supplied AST
-func GetFields(file *ast.File, typeName string) []Field {
+func GetFields(file *ast.File, desiredStruct string) []Field {
 	out := []Field{}
 
+	// Check all declarations
 	for _, decl := range file.Decls {
-		switch decl := decl.(type) {
-		case *ast.GenDecl:
-			for _, spec := range decl.Specs {
-				switch spec := spec.(type) {
-				case *ast.TypeSpec:
-					if spec.Name.Name != typeName {
-						continue
-					}
-
-					switch sType := spec.Type.(type) {
-
-					case *ast.StructType:
-						for _, field := range sType.Fields.List {
-							var name string
-							//  nil if anonymous field
-							if field.Names != nil {
-								name = field.Names[0].Name
-							}
-							typeName := getTypeString(field.Type)
-
-							thisField := Field{
-								Name:         name,
-								Type:         typeName,
-								NonArrayType: strings.TrimPrefix(typeName, "[]"),
-							}
-
-							if field.Tag != nil {
-								sTag := structTag(field.Tag.Value)
-								thisField.Tags = sTag.getAll()
-							}
-
-							// process for custom structs
-							subFields := GetFields(file, thisField.NonArrayType)
-							if len(subFields) > 0 {
-								thisField.Fields = subFields
-							}
-
-							out = append(out, thisField)
-						}
-
-					default:
-						continue
-					}
-
-				default:
-					continue
-				}
-			}
-
-		default:
+		genDecls, ok := decl.(*ast.GenDecl)
+		if !ok {
+			// skip when non-generic declarations
 			continue
 		}
+
+		for _, spec := range genDecls.Specs {
+			sType, name, isStruct := toStruct(spec)
+			if !isStruct {
+				continue
+			}
+
+			if name != desiredStruct {
+				continue
+			}
+
+			out = append(out, getStructFields(file, sType)...)
+		}
+	}
+
+	return out
+}
+
+// attempt to convert spec to struct and return:
+//   the converted struct (if successful)
+//   the name of the struct
+//   success/failure as boolean
+func toStruct(spec ast.Spec) (*ast.StructType, string, bool) {
+	typeSpec, ok := spec.(*ast.TypeSpec)
+	if !ok {
+		return nil, "", false
+	}
+
+	structType, ok := typeSpec.Type.(*ast.StructType)
+	if !ok {
+		return nil, "", false
+	}
+	return structType, typeSpec.Name.Name, true
+}
+
+func getStructFields(file *ast.File, sType *ast.StructType) []Field {
+	out := []Field{}
+
+	for _, field := range sType.Fields.List {
+		var name string
+
+		//  nil if anonymous field
+		if field.Names != nil {
+			name = field.Names[0].Name
+		}
+		typeName := getTypeString(field.Type)
+
+		thisField := Field{
+			Name:         name,
+			Type:         typeName,
+			NonArrayType: strings.TrimPrefix(typeName, "[]"),
+		}
+
+		if field.Tag != nil {
+			sTag := structTag(field.Tag.Value)
+			thisField.Tags = sTag.getAll()
+		}
+
+		// process for custom structs
+		subFields := GetFields(file, thisField.NonArrayType)
+		if len(subFields) > 0 {
+			thisField.Fields = subFields
+		}
+
+		out = append(out, thisField)
 	}
 
 	return out
