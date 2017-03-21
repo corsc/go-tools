@@ -2,13 +2,12 @@ package generator
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"regexp"
 	"sort"
 	"strings"
 	"testing"
-
-	"log"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 	"github.com/stretchr/testify/assert"

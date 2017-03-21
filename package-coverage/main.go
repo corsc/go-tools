@@ -23,8 +23,8 @@ func main() {
 	quiet := true
 	coverage := false
 	singleDir := false
-	clean := false
-	print := false
+	doClean := false
+	doPrint := false
 	ignorePaths := ""
 	webHook := ""
 	prefix := ""
@@ -36,12 +36,12 @@ func main() {
 	flag.BoolVar(&quiet, "q", true, "quiet mode will supress the stdOut messages from go test")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
-	flag.BoolVar(&clean, "d", false, "clean")
-	flag.BoolVar(&print, "p", false, "print coverage to stdout")
+	flag.BoolVar(&doClean, "d", false, "clean")
+	flag.BoolVar(&doPrint, "p", false, "print coverage to stdout")
 	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes; match files by prefixing with a slash)")
 	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
-	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output (currently only supported by Slack output)")
-	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all) (currently only supported by Slack output)")
+	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output")
+	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all)")
 	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
 	flag.Parse()
 
@@ -55,8 +55,8 @@ func main() {
 		utils.LogWhenVerbose("Quiet: %v", quiet)
 		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
 		utils.LogWhenVerbose("Single Directory: %v", singleDir)
-		utils.LogWhenVerbose("Clean: %v", clean)
-		utils.LogWhenVerbose("Print Coverage: %v", print)
+		utils.LogWhenVerbose("Clean: %v", doClean)
+		utils.LogWhenVerbose("Print Coverage: %v", doPrint)
 		utils.LogWhenVerbose("Ignore Regex: %v", ignorePaths)
 		utils.LogWhenVerbose("Slack WebHook: %v", webHook)
 		utils.LogWhenVerbose("Prefix: %v", prefix)
@@ -88,13 +88,13 @@ func main() {
 	}
 
 	coverageOk := true
-	if print {
+	if doPrint {
 		buffer := bytes.Buffer{}
 
 		if singleDir {
-			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage)
+			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage, prefix, depth)
 		} else {
-			coverageOk = parser.PrintCoverage(&buffer, path, exclusions, minCoverage)
+			coverageOk = parser.PrintCoverage(&buffer, path, exclusions, minCoverage, prefix, depth)
 		}
 
 		fmt.Print(buffer.String())
@@ -108,7 +108,7 @@ func main() {
 		}
 	}
 
-	if clean {
+	if doClean {
 		cleaner := generator.NewCleaner()
 		if singleDir {
 			cleaner.Single(path)
