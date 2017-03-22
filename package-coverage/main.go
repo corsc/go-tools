@@ -73,6 +73,11 @@ func main() {
 		exclusions = regexp.MustCompile(ignorePaths)
 	}
 
+	if depth > 0 && len(prefix) == 0 {
+		println("You must specify a prefix when using -depth")
+		os.Exit(-1)
+	}
+
 	if coverage {
 		if singleDir {
 			generator.CoverageSingle(path, exclusions, quiet, goTestArgs)
@@ -125,7 +130,8 @@ func main() {
 func getPath() string {
 	path := flag.Arg(0)
 	if path == "" {
-		panic("Please include a directory as the last argument")
+		println("Please include a directory as the last argument")
+		os.Exit(-1)
 	}
 	return path
 }
