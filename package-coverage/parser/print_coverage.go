@@ -51,16 +51,29 @@ func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPacka
 		pkgFormatted := strings.Replace(pkg, prefix, "", -1)
 		pkgDepth := strings.Count(pkgFormatted, "/")
 
-		if depth > 0 && pkgDepth <= depth {
-			if covered < minCoverage {
-				fmt.Fprintf(writer, "\033[1;31m%2.2f		%5.0f		%s\033[0m\n", covered, statements, pkgFormatted)
+		if depth > 0 {
+			if pkgDepth <= depth {
+				if !addLinePrint(writer, pkgFormatted, covered, statements, minCoverage) {
+					coverageOk = false
+				}
+			}
+		} else {
+			if !addLinePrint(writer, pkgFormatted, covered, statements, minCoverage) {
 				coverageOk = false
-			} else {
-				fmt.Fprintf(writer, "%2.2f		%5.0f		%s\n", covered, statements, pkgFormatted)
 			}
 		}
 	}
 	fmt.Fprint(writer, "\n")
 
 	return coverageOk
+}
+
+func addLinePrint(writer io.Writer, pkgFormatted string, covered float64, statements float64, minCoverage float64) bool {
+	if covered < minCoverage {
+		fmt.Fprintf(writer, "\033[1;31m%2.2f		%5.0f		%s\033[0m\n", covered, statements, pkgFormatted)
+		return false
+	}
+
+	fmt.Fprintf(writer, "%2.2f		%5.0f		%s\n", covered, statements, pkgFormatted)
+	return true
 }

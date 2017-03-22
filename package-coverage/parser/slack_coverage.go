@@ -50,39 +50,47 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 
 	for _, pkg := range pkgs {
 		cover := coverageData[pkg]
-		covered, stmts := getStats(cover)
+		covered, statements := getStats(cover)
 
 		pkgFormatted := strings.Replace(pkg, prefix, "", -1)
 		pkgDepth := strings.Count(pkgFormatted, "/")
 
-		if depth > 0 && pkgDepth <= depth {
-			var color string
-			if covered > 70 {
-				color = "good"
-			} else if covered > 50 {
-				color = "warning"
-			} else {
-				color = "danger"
+		if depth > 0 {
+			if pkgDepth <= depth {
+				addLineSlack(&output, pkgFormatted, covered, statements, lines)
+				if lines >= 18 {
+					sendToSlack(webhook, output)
+					lines = 0
+					output = ""
+				} else {
+					lines++
+				}
 			}
-
-			if lines > 0 {
-				output += ","
-			}
-
-			output += fmt.Sprintf("{ \"color\": \"%s\", \"text\": \"%-50s %3.2f%% (%0.0f statements)\" }", color, pkgFormatted, covered, stmts)
-			if lines >= 20 {
-				sendToSlack(webhook, output)
-				lines = 0
-				output = ""
-			} else {
-				lines++
-			}
+		} else {
+			addLineSlack(&output, pkgFormatted, covered, statements, 0)
 		}
 	}
 
 	if len(output) > 0 {
 		sendToSlack(webhook, output)
 	}
+}
+
+func addLineSlack(output *string, pkgFormatted string, covered float64, stmts float64, lines int) {
+	var color string
+	if covered > 70 {
+		color = "good"
+	} else if covered > 50 {
+		color = "warning"
+	} else {
+		color = "danger"
+	}
+
+	if lines > 0 {
+		*output += ","
+	}
+
+	*output += fmt.Sprintf("{ \"color\": \"%s\", \"text\": \"%-50s %3.2f%% (%0.0f statements)\" }", color, pkgFormatted, covered, stmts)
 }
 
 // call the Slack incoming webHook API to send the message
