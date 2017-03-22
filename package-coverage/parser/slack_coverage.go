@@ -97,12 +97,7 @@ func addLineSlack(output *string, pkgFormatted string, covered float64, stmts fl
 func sendToSlack(webHook string, attachments string) {
 	message := `{ "username": "Test Coverage Bot", "attachments": [ ` + attachments + ` ] }`
 
-	req, err := http.NewRequest("POST", webHook, bytes.NewBufferString(message))
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.Post(webHook, "application/json", bytes.NewBufferString(message))
 	if err != nil {
 		panic(err)
 	}
