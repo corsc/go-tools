@@ -1,5 +1,17 @@
 package refex
 
+import "io/ioutil"
+
+// DoFile wraps Do() and loads the code from the filename supplied
+func DoFile(fileName string, before string, after string) (string, error) {
+	codeIn, err := getFileContents(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return Do(codeIn, before, after)
+}
+
 // Do will replace all matches of "before" with "after" in "codeIn"
 func Do(codeIn string, before string, after string) (string, error) {
 	output := ""
@@ -42,9 +54,18 @@ func Do(codeIn string, before string, after string) (string, error) {
 		lastPos = beforeMatch.endPos
 	}
 
-	if len(codeIn) > (lastPos + 1) {
+	if len(codeIn) > lastPos {
 		output += codeIn[lastPos:]
 	}
 
 	return output, nil
+}
+
+func getFileContents(fileName string) (string, error) {
+	contents, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		return "", err
+	}
+
+	return string(contents), nil
 }

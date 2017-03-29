@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+// characters that have special regex meaning that we need to process differently
+var specialChars = []string{`\`, `(`, `)`}
+
+// regex used to replace arguments
+const wildcard = `([^\)]*)`
+
 type pattern interface {
 	build(in string) ([]*part, error)
 	regexp() (*regexp.Regexp, error)
@@ -22,7 +28,8 @@ func (p *patternImpl) build(in string) ([]*part, error) {
 
 	matches := regexp.MustCompile(`(\$)[0-9]+(\$)`).FindAllStringIndex(in, -1)
 	if matches == nil {
-		return nil, fmt.Errorf("no tokens found in supplied transform '%s'", in)
+		// prepend 1 token to allow for matches with no tokens to work
+		matches = regexp.MustCompile(`(\$)[0-9]+(\$)`).FindAllStringIndex("$1" + in, -1)
 	}
 
 	lastPos := 0
@@ -49,11 +56,15 @@ func (p *patternImpl) build(in string) ([]*part, error) {
 }
 
 func (p *patternImpl) regexp() (*regexp.Regexp, error) {
-	regex := strings.Replace(p.pattern, `(`, `\(`, -1)
-	regex = strings.Replace(regex, `)`, `\)`, -1)
+	regex := p.pattern
+
+	// escape regex special chars
+	for _, thisChar := range specialChars {
+		regex = strings.Replace(regex, thisChar, `\`+thisChar, -1)
+	}
 
 	for _, part := range p.parts {
-		regex = strings.Replace(regex, "$"+strconv.Itoa(part.index)+"$", ")(.*)(", 1)
+		regex = strings.Replace(regex, "$"+strconv.Itoa(part.index)+"$", ")"+wildcard+"(", 1)
 	}
 
 	return regexp.Compile(`(` + regex + `)`)

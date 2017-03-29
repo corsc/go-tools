@@ -64,7 +64,7 @@ func (m *codeMatcherImpl) buildParts() error {
 		before := m.code[lastPos:match.startPos]
 		code := m.code[match.startPos:match.endPos]
 
-		patternChunks := strings.Split(match.pattern, "(.*)")
+		patternChunks := strings.Split(match.pattern, wildcard)
 
 		for index, chunkRaw := range patternChunks {
 			chunk := m.extractCodeFromPattern(chunkRaw)
@@ -105,7 +105,9 @@ func (m *codeMatcherImpl) extractCodeFromPattern(chunk string) string {
 	// TODO: add more regex conversion here
 	chunk = strings.TrimPrefix(chunk, "(")
 	chunk = strings.TrimSuffix(chunk, ")")
-	chunk = strings.Replace(chunk, `\(`, `(`, -1)
-	chunk = strings.Replace(chunk, `\)`, `)`, -1)
+
+	for _, thisChar := range specialChars {
+		chunk = strings.Replace(chunk, `\`+thisChar, thisChar, -1)
+	}
 	return chunk
 }

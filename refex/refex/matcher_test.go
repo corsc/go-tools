@@ -18,39 +18,74 @@ func TestCodeMatcher_find(t *testing.T) {
 		{
 			code: "something, err := statsd.Count(a, b)",
 			pattern: &patternStub{
-				regex: regexp.MustCompile(`(statsd.Count\()(.*)(\))`),
+				regex: regexp.MustCompile(`(statsd.Count\()` + wildcard + `(\))`),
 			},
 			expected: []*match{
 				{
 					startPos: 18,
 					endPos:   36,
-					pattern:  `(statsd.Count\()(.*)(\))`,
+					pattern:  `(statsd.Count\()` + wildcard + `(\))`,
 				},
 			},
 		},
 		{
 			code: "something, err := stats.D.Count(a, b)",
 			pattern: &patternStub{
-				regex: regexp.MustCompile(`(stats.D.Count\()(.*)(\))`),
+				regex: regexp.MustCompile(`(stats.D.Count\()` + wildcard + `(\))`),
 			},
 			expected: []*match{
 				{
 					startPos: 18,
 					endPos:   37,
-					pattern:  `(stats.D.Count\()(.*)(\))`,
+					pattern:  `(stats.D.Count\()` + wildcard + `(\))`,
 				},
 			},
 		},
 		{
 			code: "something, err := statsd.Count($1$, $2$)",
 			pattern: &patternStub{
-				regex: regexp.MustCompile(`(statsd.Count\()(.*)(, )(.*)(\))`),
+				regex: regexp.MustCompile(`(statsd.Count\()` + wildcard + `(, )` + wildcard + `(\))`),
 			},
 			expected: []*match{
 				{
 					startPos: 18,
 					endPos:   40,
-					pattern:  `(statsd.Count\()(.*)(, )(.*)(\))`,
+					pattern:  `(statsd.Count\()` + wildcard + `(, )` + wildcard + `(\))`,
+				},
+			},
+		},
+		{
+			code: `package examples
+
+import (
+	"fmt"
+	"math/rand"
+)
+
+func Example1() {
+	fmt.Printf("Roll: %d", rand.Intn(6))
+	fmt.Printf("Roll: %d", rand.Intn(10))
+	fmt.Printf("Roll: %d", rand.Intn(12))
+}
+`,
+			pattern: &patternStub{
+				regex: regexp.MustCompile(`(rand.Intn\()` + wildcard + `(\))`),
+			},
+			expected: []*match{
+				{
+					startPos: 92,
+					endPos:   104,
+					pattern:  `(rand.Intn\()` + wildcard + `(\))`,
+				},
+				{
+					startPos: 130,
+					endPos:   143,
+					pattern:  `(rand.Intn\()` + wildcard + `(\))`,
+				},
+				{
+					startPos: 169,
+					endPos:   182,
+					pattern:  `(rand.Intn\()` + wildcard + `(\))`,
 				},
 			},
 		},
@@ -79,7 +114,7 @@ func TestCodeMatcher_buildParts(t *testing.T) {
 				{
 					startPos: 18,
 					endPos:   36,
-					pattern:  `(statsd.Count\()(.*)(\))`,
+					pattern:  `(statsd.Count\()` + wildcard + `(\))`,
 				},
 			},
 			expected: []*part{
@@ -98,7 +133,7 @@ func TestCodeMatcher_buildParts(t *testing.T) {
 				{
 					startPos: 18,
 					endPos:   37,
-					pattern:  `(stats.D.Count\()(.*)(\))`,
+					pattern:  `(stats.D.Count\()` + wildcard + `(\))`,
 				},
 			},
 			expected: []*part{
@@ -117,7 +152,7 @@ func TestCodeMatcher_buildParts(t *testing.T) {
 				{
 					startPos: 18,
 					endPos:   36,
-					pattern:  `(statsd.Count\()(.*)(, )(.*)(\))`,
+					pattern:  `(statsd.Count\()` + wildcard + `(, )` + wildcard + `(\))`,
 				},
 			},
 			expected: []*part{

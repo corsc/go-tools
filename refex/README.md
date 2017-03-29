@@ -74,5 +74,5 @@ After:
 
 ### Provided examples
 
-* `$ refex -d -b 'rand.Intn($1$)' -a 'rand.In63n($1$)' test-data/example1.go`
+* `$ refex -d -b 'rand.Intn($1$)' -a 'rand.Int63n($1$)' test-data/example1.go`
 * `$ refex -d -b 'fmt.Print($1$)' -a 'fmt.Fprintf(os.Stderr, $1$)' test-data/example2.go`

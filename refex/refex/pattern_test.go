@@ -86,15 +86,15 @@ func TestPattern_regex(t *testing.T) {
 	}{
 		{
 			transform: `statsd.Count($1$)`,
-			expected:  `(statsd.Count\()(.*)(\))`,
+			expected:  `(statsd.Count\()` + wildcard + `(\))`,
 		},
 		{
 			transform: `stats.D.Count($1$)`,
-			expected:  `(stats.D.Count\()(.*)(\))`,
+			expected:  `(stats.D.Count\()` + wildcard + `(\))`,
 		},
 		{
 			transform: `statsd.Count($1$, $2$)`,
-			expected:  `(statsd.Count\()(.*)(, )(.*)(\))`,
+			expected:  `(statsd.Count\()` + wildcard + `(, )` + wildcard + `(\))`,
 		},
 	}
 
