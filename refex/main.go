@@ -10,9 +10,10 @@ import (
 	"os"
 	"strings"
 
+	"path/filepath"
+
 	"github.com/corsc/go-tools/refex/refex"
 	"golang.org/x/tools/imports"
-	"path/filepath"
 )
 
 type settings struct {
@@ -49,7 +50,7 @@ func main() {
 
 		for _, file := range files {
 			if strings.HasSuffix(file.Name(), ".go") {
-				paths = append(paths, filepath.Join(pathSupplied,file.Name()))
+				paths = append(paths, filepath.Join(pathSupplied, file.Name()))
 			}
 		}
 	} else {
@@ -131,8 +132,8 @@ func goFmt(codeIn []byte) ([]byte, error) {
 
 func goImports(fileName string, codeIn []byte) ([]byte, error) {
 	formattedCode, err := imports.Process(fileName, codeIn, &imports.Options{
-		AllErrors:true,
-		Comments: true,
+		AllErrors: true,
+		Comments:  true,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stdout, "warning: invalid code generated. Err: %s", err)

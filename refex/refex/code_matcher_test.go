@@ -89,6 +89,24 @@ func Example1() {
 				},
 			},
 		},
+		{
+			code: `package examples
+
+				func Example1() {
+					_, err = DoAsync(masterConfig, "SETEX", key, int64(ttl.Seconds()), raw)
+				}
+		`,
+			pattern: &patternStub{
+				regex: regexp.MustCompile(`(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`),
+			},
+			expected: []*match{
+				{
+					startPos: 54,
+					endPos:   116,
+					pattern:  `(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`,
+				},
+			},
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -97,7 +115,7 @@ func Example1() {
 
 			resultErr := matcher.find(scenario.code, scenario.pattern)
 			assert.Nil(t, resultErr)
-			assert.Equal(t, scenario.expected, matcher.matches)
+			assert.Equal(t, scenario.expected, matcher.matches, "first match was: '%s'", scenario.code[matcher.matches[0].startPos:matcher.matches[0].endPos])
 		})
 	}
 }
@@ -165,6 +183,39 @@ func TestCodeMatcher_buildParts(t *testing.T) {
 				{code: `, `},
 				{
 					code:  `b`,
+					isArg: true,
+					index: 2,
+				},
+				{code: `)`},
+			},
+		},
+		{
+			codeIn: `package examples
+
+				func Example1() {
+					_, err = DoAsync(masterConfig, "SETEX", key, int64(ttl.Seconds()), raw)
+				}
+				`,
+			matches: []*match{
+				{
+					startPos: 54,
+					endPos:   116,
+					pattern:  `(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`,
+				},
+			},
+			expected: []*part{
+				{code: `package examples
+
+				func Example1() {
+					_, err = DoAsync(`},
+				{
+					code:  `masterConfig`,
+					isArg: true,
+					index: 1,
+				},
+				{code: `, `},
+				{
+					code:  `"SETEX", key, int64(ttl.Seconds()), raw`,
 					isArg: true,
 					index: 2,
 				},

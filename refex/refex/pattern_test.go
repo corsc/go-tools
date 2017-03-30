@@ -96,6 +96,10 @@ func TestPattern_regex(t *testing.T) {
 			transform: `statsd.Count($1$, $2$)`,
 			expected:  `(statsd.Count\()` + wildcard + `(, )` + wildcard + `(\))`,
 		},
+		{
+			transform: `Do(context.Background(), $2$)  // config: $1$`,
+			expected:  `(Do\(context.Background\(\), )` + wildcard + `(\)  // config: )` + wildcard + `()`,
+		},
 	}
 
 	for _, scenario := range scenarios {

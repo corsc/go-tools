@@ -41,14 +41,53 @@ func (m *codeMatcherImpl) find(code string, pattern pattern) error {
 
 	m.matches = make([]*match, len(regexMatches))
 	for index, regexMatch := range regexMatches {
+		startPos := regexMatch[0]
+		endPos := regexMatch[1]
+
+		endPos -= m.adjustForDoubleBrackets(code, startPos, endPos)
+		endPos -= m.adjustForGreedy(code, startPos, endPos)
+
 		m.matches[index] = &match{
-			startPos: regexMatch[0],
-			endPos:   regexMatch[1],
+			startPos: startPos,
+			endPos:   endPos,
 			pattern:  regexp.String(),
 		}
 	}
 
 	return nil
+}
+
+// Adjust for cases where the params contain `()` or `(something)`
+func (m *codeMatcherImpl) adjustForDoubleBrackets(code string, startPos int, endPos int) int {
+	adjustment := 0
+
+	codeMatch := code[startPos:endPos]
+	if leftBrackets := strings.Count(codeMatch, "("); leftBrackets > 0 {
+		lastRightBracket := strings.LastIndex(codeMatch, ")")
+		if lastRightBracket > 0 {
+			adjustment = (len(codeMatch) - lastRightBracket - 1)
+		}
+	}
+
+	return adjustment
+}
+
+// Adjust for cases where Greedy matching matches too many closing brackets
+func (m *codeMatcherImpl) adjustForGreedy(code string, startPos int, endPos int) int {
+	adjustment := 0
+
+	codeMatch := code[startPos:endPos]
+	leftBrackets := strings.Count(codeMatch, "(")
+	rightBrackets := strings.Count(codeMatch, ")")
+
+	if rightBrackets > leftBrackets {
+		lastRightBracket := strings.LastIndex(codeMatch, ")")
+		if lastRightBracket > 0 {
+			adjustment = (len(codeMatch) - lastRightBracket)
+		}
+	}
+
+	return adjustment
 }
 
 func (m *codeMatcherImpl) buildParts() error {
@@ -81,7 +120,14 @@ func (m *codeMatcherImpl) buildParts() error {
 			}
 
 			after := m.extractCodeFromPattern(patternChunks[nextIndex])
-			loc := strings.Index(code, after)
+
+			// grab the first occurence or the last depending where we are in the pattern
+			var loc int
+			if nextIndex == (len(patternChunks) - 1) {
+				loc = strings.LastIndex(code, after)
+			} else {
+				loc = strings.Index(code, after)
+			}
 
 			thisFragment := code[:loc]
 
@@ -103,8 +149,8 @@ func (m *codeMatcherImpl) buildParts() error {
 
 func (m *codeMatcherImpl) extractCodeFromPattern(chunk string) string {
 	// TODO: add more regex conversion here
-	chunk = strings.TrimPrefix(chunk, "(")
-	chunk = strings.TrimSuffix(chunk, ")")
+	chunk = strings.TrimPrefix(chunk, patternPrefix)
+	chunk = strings.TrimSuffix(chunk, patternSuffix)
 
 	for _, thisChar := range specialChars {
 		chunk = strings.Replace(chunk, `\`+thisChar, thisChar, -1)

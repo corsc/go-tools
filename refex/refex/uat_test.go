@@ -132,6 +132,23 @@ func something() {
 		}
 		`,
 		},
+		{
+			desc: "example #2",
+			code: `package examples
+
+		func Example1() {
+			_, err = DoAsync(masterConfig, "SETEX", key, int64(ttl.Seconds()), raw)
+		}
+		`,
+			before: `DoAsync($1$, $2$)`,
+			after:  `Do(context.Background(), $2$)  // config: $1$`,
+			expected: `package examples
+
+		func Example1() {
+			_, err = Do(context.Background(), "SETEX", key, int64(ttl.Seconds()), raw)  // config: masterConfig
+		}
+		`,
+		},
 	}
 
 	for _, scenario := range scenarios {
