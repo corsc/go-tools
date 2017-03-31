@@ -76,3 +76,7 @@ After:
 
 * `$ refex -d -b 'rand.Intn($1$)' -a 'rand.Int63n($1$)' test-data/example1.go`
 * `$ refex -d -b 'fmt.Print($1$)' -a 'fmt.Fprintf(os.Stderr, $1$)' test-data/example2.go`
+
+
+### Notes:
+* While you can move the params, some combinations won't work.  For example: `fmt.Fprintf(os.Stderr, "fu") // $1$` will work however `println(fmt.Sprintf("fu")) // $1$` will not, because of the nested brackets

@@ -1,10 +1,9 @@
 package refex
 
 import (
+	"errors"
 	"regexp"
 	"testing"
-
-	"errors"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -103,6 +102,19 @@ func Example1() {
 				{
 					startPos: 54,
 					endPos:   116,
+					pattern:  `(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`,
+				},
+			},
+		},
+		{
+			code: `v, err := redis.Bytes(DoAsync(r.SlaveRedis(), "GET", key))`,
+			pattern: &patternStub{
+				regex: regexp.MustCompile(`(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`),
+			},
+			expected: []*match{
+				{
+					startPos: 22,
+					endPos:   57,
 					pattern:  `(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`,
 				},
 			},
@@ -216,6 +228,31 @@ func TestCodeMatcher_buildParts(t *testing.T) {
 				{code: `, `},
 				{
 					code:  `"SETEX", key, int64(ttl.Seconds()), raw`,
+					isArg: true,
+					index: 2,
+				},
+				{code: `)`},
+			},
+		},
+		{
+			codeIn: `v, err := redis.Bytes(DoAsync(r.SlaveRedis(), "GET", key))`,
+			matches: []*match{
+				{
+					startPos: 22,
+					endPos:   57,
+					pattern:  `(DoAsync\()` + wildcard + `(, )` + wildcard + `(\))`,
+				},
+			},
+			expected: []*part{
+				{code: `v, err := redis.Bytes(DoAsync(`},
+				{
+					code:  `r.SlaveRedis()`,
+					isArg: true,
+					index: 1,
+				},
+				{code: `, `},
+				{
+					code:  `"GET", key`,
 					isArg: true,
 					index: 2,
 				},

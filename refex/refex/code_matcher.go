@@ -148,7 +148,6 @@ func (m *codeMatcherImpl) buildParts() error {
 }
 
 func (m *codeMatcherImpl) extractCodeFromPattern(chunk string) string {
-	// TODO: add more regex conversion here
 	chunk = strings.TrimPrefix(chunk, patternPrefix)
 	chunk = strings.TrimSuffix(chunk, patternSuffix)
 

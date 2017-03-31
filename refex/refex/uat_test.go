@@ -149,6 +149,13 @@ func something() {
 		}
 		`,
 		},
+		{
+			desc:     "example #3",
+			code:     `v, err := redis.Bytes(DoAsync(r.SlaveRedis(), "GET", key))`,
+			before:   `DoAsync($1$, $2$)`,
+			after:    `Do(context.Background(), $2$)`,
+			expected: `v, err := redis.Bytes(Do(context.Background(), "GET", key))`,
+		},
 	}
 
 	for _, scenario := range scenarios {

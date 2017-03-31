@@ -67,6 +67,52 @@ func TestPattern_build(t *testing.T) {
 			},
 			expectErr: false,
 		},
+		{
+			transform: "Do(context.Background(), $2$)  // config: $1$",
+			expected: []*part{
+				{
+					code: "Do(context.Background(), ",
+				},
+				{
+					isArg: true,
+					index: 2,
+				},
+				{
+					code: ")  // config: ",
+				},
+				{
+					isArg: true,
+					index: 1,
+				},
+				{
+					code: "",
+				},
+			},
+			expectErr: false,
+		},
+		{
+			transform: "DoAsync($1$, $2$)",
+			expected: []*part{
+				{
+					code: "DoAsync(",
+				},
+				{
+					isArg: true,
+					index: 1,
+				},
+				{
+					code: ", ",
+				},
+				{
+					isArg: true,
+					index: 2,
+				},
+				{
+					code: ")",
+				},
+			},
+			expectErr: false,
+		},
 	}
 
 	for _, scenario := range scenarios {
