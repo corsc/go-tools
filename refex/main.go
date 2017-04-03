@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"go/format"
 	"io"
 	"io/ioutil"
 	"os"
@@ -12,8 +11,8 @@ import (
 
 	"path/filepath"
 
+	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/refex/refex"
-	"golang.org/x/tools/imports"
 )
 
 type settings struct {
@@ -71,12 +70,12 @@ func do(fileName string, settings *settings) {
 	// format code
 	if !settings.skipFormat {
 		codeAsBytes := []byte(result)
-		codeAsBytes, err = goFmt(codeAsBytes)
+		codeAsBytes, err = commons.GoFmt(codeAsBytes)
 		if err != nil {
 			exitWithError(err)
 		}
 
-		codeAsBytes, err = goImports(fileName, codeAsBytes)
+		codeAsBytes, err = commons.GoImports(fileName, codeAsBytes)
 		if err != nil {
 			exitWithError(err)
 		}
@@ -119,25 +118,4 @@ func sanityCheck(settings *settings, fileName string) {
 func exitWithError(err error) {
 	fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 	os.Exit(1)
-}
-
-func goFmt(codeIn []byte) ([]byte, error) {
-	formattedCode, err := format.Source(codeIn)
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "warning: invalid code generated. Err: %s", err)
-		return codeIn, err
-	}
-	return formattedCode, nil
-}
-
-func goImports(fileName string, codeIn []byte) ([]byte, error) {
-	formattedCode, err := imports.Process(fileName, codeIn, &imports.Options{
-		AllErrors: true,
-		Comments:  true,
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stdout, "warning: invalid code generated. Err: %s", err)
-		return codeIn, err
-	}
-	return formattedCode, nil
 }

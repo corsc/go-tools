@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/format"
 	"go/parser"
 	"go/token"
 	"io/ioutil"
@@ -14,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/gonerator/tmpl"
 )
 
@@ -24,7 +24,6 @@ type Gonerator struct {
 	data tmpl.TemplateData
 }
 
-// Build generates the code based on supplied values (request call to preceeding ParsePackageDir()
 func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string) {
 	g.data = tmpl.TemplateData{
 		TypeName:     typeName,
@@ -79,7 +78,6 @@ func (g *Gonerator) findTypeFields() {
 	}
 }
 
-// generate produces the code for the named type.
 func (g *Gonerator) generate(templateContent string) {
 	buffer := &bytes.Buffer{}
 	tmpl.Generate(buffer, g.data, templateContent)
@@ -90,7 +88,6 @@ func (g *Gonerator) printf(format string, args ...interface{}) {
 	fmt.Fprintf(&g.buf, format, args...)
 }
 
-// ParsePackageDir parses the package residing in the directory.
 func (g *Gonerator) ParsePackageDir(directory string) {
 	pkg, err := build.Default.ImportDir(directory, 0)
 	if err != nil {
@@ -102,7 +99,6 @@ func (g *Gonerator) ParsePackageDir(directory string) {
 	g.parsePackage(directory, names)
 }
 
-// prefixDirectory places the directory name on the beginning of each name in the list.
 func prefixDirectory(directory string, names []string) []string {
 	if directory == "." {
 		return names
@@ -114,9 +110,6 @@ func prefixDirectory(directory string, names []string) []string {
 	return ret
 }
 
-// parsePackage analyzes the single package constructed from the named files.
-// If text is non-nil, it is a string to be used instead of the content of the file,
-// to be used for testing. parsePackage exits if there is an error.
 func (g *Gonerator) parsePackage(directory string, names []string) {
 	var files []*File
 	var astFiles []*ast.File
@@ -145,17 +138,29 @@ func (g *Gonerator) parsePackage(directory string, names []string) {
 	g.pkg.astFiles = astFiles
 }
 
-// format returns the gofmt-ed contents of the Gonerator's buffer.
+// format returns the contents of the Gonerator's buffer after processing by gofmt and goimports
 func (g *Gonerator) format() ([]byte, error) {
-	src, err := format.Source(g.buf.Bytes())
+	original := g.buf.Bytes()
+
+	result, err := commons.GoFmt(original)
 	if err != nil {
 		// Should never happen, but can arise when developing this code.
 		// The user can compile the output to see the error.
 		log.Printf("[%s] warning: internal error: invalid Go gonerated: %s", g.data.OutputFile, err)
 		log.Printf("[%s] warning: compile the package to analyze the error", g.data.OutputFile)
-		return g.buf.Bytes(), err
+		return original, err
 	}
-	return src, nil
+
+	result, err = commons.GoImports(g.data.OutputFile, result)
+	if err != nil {
+		// Should never happen, but can arise when developing this code.
+		// The user can compile the output to see the error.
+		log.Printf("[%s] warning: internal error: invalid Go gonerated: %s", g.data.OutputFile, err)
+		log.Printf("[%s] warning: compile the package to analyze the error", g.data.OutputFile)
+		return original, err
+	}
+
+	return result, err
 }
 
 func (g *Gonerator) toBytes() []byte {
