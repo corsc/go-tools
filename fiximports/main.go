@@ -1,0 +1,58 @@
+// Package main is the main package for fix imports
+package main
+
+import (
+	"flag"
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/corsc/go-tools/commons"
+	"github.com/corsc/go-tools/fiximports/fiximports"
+)
+
+func usage() {
+	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "\tfiximports [flags] # runs on package in current directory\n")
+	fmt.Fprintf(os.Stderr, "\tfiximports [flags] directory\n")
+	fmt.Fprintf(os.Stderr, "\tfiximports [flags] files... # must be a single package\n")
+	fmt.Fprintf(os.Stderr, "Flags:\n")
+	flag.PrintDefaults()
+}
+
+func main() {
+	flag.Usage = usage
+	flag.Parse()
+
+	var filenames []string
+	var err error
+
+	switch flag.NArg() {
+	case 0:
+		filenames, err = commons.GetGoFilesFromCurrentDir()
+
+	case 1:
+		arg := flag.Arg(0)
+		if strings.HasSuffix(arg, "/...") && commons.IsDir(arg[:len(arg)-4]) {
+			filenames, err = commons.GetGoFilesFromDirectoryRecursive(arg)
+
+		} else if commons.IsDir(arg) {
+			filenames, err = commons.GetGoFilesFromDir(arg)
+
+		} else if commons.FileExists(arg) {
+			filenames, err = commons.GetGoFiles(arg)
+
+		} else {
+			err = fmt.Errorf("'%s' did not resolve to a directory or file", arg)
+		}
+
+	default:
+		filenames, err = commons.GetGoFiles(flag.Args()...)
+	}
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+	}
+
+	fiximports.ProcessFiles(filenames)
+}
