@@ -171,6 +171,12 @@ func TestProcessFile(t *testing.T) {
 			expected:    []byte(testFile1Fixed),
 			expectedErr: false,
 		},
+		{
+			desc:        "happy path - test file 3",
+			source:      []byte(testFile3),
+			expected:    []byte(testFile3),
+			expectedErr: false,
+		},
 	}
 
 	for _, scenario := range scenarios {
@@ -229,6 +235,10 @@ import (
 	"net/http/httptest"
 	"net/http/httputil"
 )
+
+func main() {}
+`
+var testFile3 = `package main
 
 func main() {}
 `

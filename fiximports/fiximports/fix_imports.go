@@ -79,11 +79,15 @@ func (v *myVisitor) Visit(node ast.Node) ast.Visitor {
 }
 
 func (v *myVisitor) fixImports(file *ast.File) {
-	startPos, endPos := v.getImportBoundaries(file)
+	startPos := 0
+	endPos := 0
+	updatedImports := ""
 
-	v.orderImports(file)
-
-	updatedImports := v.generateImportsFragment(file)
+	if len(file.Imports) > 0 {
+		startPos, endPos = v.getImportBoundaries(file)
+		v.orderImports(file)
+		updatedImports = v.generateImportsFragment(file)
+	}
 
 	v.output = v.replaceImports(file, updatedImports, startPos, endPos)
 }
