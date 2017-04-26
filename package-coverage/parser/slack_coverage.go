@@ -13,18 +13,18 @@ import (
 )
 
 // SlackCoverage will attempt to calculate and output the coverage from the supplied coverage files to Slack
-func SlackCoverage(basePath string, exclusionsMatcher *regexp.Regexp, webHook string, prefix string, depth int) {
+func SlackCoverage(basePath string, exclusionsMatcher *regexp.Regexp, webHook string, channelOverride string, prefix string, depth int) {
 	paths, err := utils.FindAllCoverageFiles(basePath)
 	if err != nil {
 		log.Panicf("error file finding coverage files %s", err)
 	}
 
 	pkgs, coverageData := getCoverageData(paths, exclusionsMatcher)
-	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
+	prepareAndSendToSlack(pkgs, coverageData, webHook, channelOverride, prefix, depth)
 }
 
 // SlackCoverageSingle is the same as SlackCoverage only for 1 directory only
-func SlackCoverageSingle(path string, webHook string, prefix string, depth int) {
+func SlackCoverageSingle(path string, webHook string, channelOverride string, prefix string, depth int) {
 	var fullPath string
 	if path == "./" {
 		fullPath = utils.GetCurrentDir()
@@ -36,7 +36,7 @@ func SlackCoverageSingle(path string, webHook string, prefix string, depth int) 
 	contents := getFileContents(fullPath)
 	pkgs, coverageData := getCoverageByContents(contents)
 
-	prepareAndSendToSlack(pkgs, coverageData, webHook, prefix, depth)
+	prepareAndSendToSlack(pkgs, coverageData, webHook, channelOverride, prefix, depth)
 }
 
 // prepare the slack message format and send.
@@ -44,7 +44,7 @@ func SlackCoverageSingle(path string, webHook string, prefix string, depth int) 
 // * the message uses the Slack message "attachments"; one attachment per package
 // * each package is prefixed with a color highlight that corresponds to coverage amounts.
 // (coverage > 70% is green.  70% > x >= 50 is orange.  coverage < 50% is red)
-func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhook string, prefix string, depth int) {
+func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhook string, channelOverride string, prefix string, depth int) {
 	lines := 0
 	output := ""
 
@@ -59,7 +59,7 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 			if pkgDepth <= depth {
 				addLineSlack(&output, pkgFormatted, covered, statements, lines)
 				if lines >= 18 {
-					sendToSlack(webhook, output)
+					sendToSlack(webhook, channelOverride, output)
 					lines = 0
 					output = ""
 				} else {
@@ -72,7 +72,7 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 	}
 
 	if len(output) > 0 {
-		sendToSlack(webhook, output)
+		sendToSlack(webhook, channelOverride, output)
 	}
 }
 
@@ -94,8 +94,13 @@ func addLineSlack(output *string, pkgFormatted string, covered float64, stmts fl
 }
 
 // call the Slack incoming webHook API to send the message
-func sendToSlack(webHook string, attachments string) {
-	message := `{ "username": "Test Coverage Bot", "attachments": [ ` + attachments + ` ] }`
+func sendToSlack(webHook string, channelOverride string, attachments string) {
+	customChannel := ""
+	if len(channelOverride) > 0 {
+		customChannel = `, "channel": "` + channelOverride + `"`
+	}
+
+	message := `{ "username": "Test Coverage Bot", "attachments": [ ` + attachments + ` ] ` + customChannel + ` }`
 
 	resp, err := http.Post(webHook, "application/json", bytes.NewBufferString(message))
 	if err != nil {

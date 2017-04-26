@@ -27,6 +27,7 @@ func main() {
 	doPrint := false
 	ignorePaths := ""
 	webHook := ""
+	channelOverride := ""
 	prefix := ""
 	depth := 0
 	minCoverage := 0
@@ -40,6 +41,7 @@ func main() {
 	flag.BoolVar(&doPrint, "p", false, "print coverage to stdout")
 	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes; match files by prefixing with a slash)")
 	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
+	flag.StringVar(&channelOverride, "channel", "", "Slack channel (missing means use the default channel for this webhook)")
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all)")
 	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
@@ -107,9 +109,9 @@ func main() {
 
 	if webHook != "" {
 		if singleDir {
-			parser.SlackCoverageSingle(path, webHook, prefix, depth)
+			parser.SlackCoverageSingle(path, webHook, channelOverride, prefix, depth)
 		} else {
-			parser.SlackCoverage(path, exclusions, webHook, prefix, depth)
+			parser.SlackCoverage(path, exclusions, webHook, channelOverride, prefix, depth)
 		}
 	}
 
