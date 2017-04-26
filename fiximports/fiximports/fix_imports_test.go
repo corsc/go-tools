@@ -181,6 +181,18 @@ func TestProcessFile(t *testing.T) {
 			expectedErr: false,
 		},
 		{
+			desc:        "happy path - test file 2",
+			source:      testFile2,
+			expected:    testFile2Fixed,
+			expectedErr: false,
+		},
+		{
+			desc:        "happy path - test file 3",
+			source:      testFile3,
+			expected:    testFile3Fixed,
+			expectedErr: false,
+		},
+		{
 			desc:        "happy path - no imports",
 			source:      testFileNoImports,
 			expected:    testFileNoImports,
@@ -281,6 +293,36 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+)
+
+func main() {}
+`
+
+var testFile3 = `package main
+
+import (
+	"crypto/hmac"
+	"crypto/subtle"
+	"fmt"
+	"math"
+	"time"
+	"crypto/sha256"
+	"encoding/base64"
+)
+
+func main() {}
+`
+
+var testFile3Fixed = `package main
+
+import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/base64"
+	"fmt"
+	"math"
+	"time"
 )
 
 func main() {}

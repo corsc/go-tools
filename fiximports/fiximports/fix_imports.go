@@ -89,11 +89,6 @@ func (v *myVisitor) fixImports(file *ast.File) {
 	endPos := 0
 	updatedImports := ""
 
-	err := v.preClean(file)
-	if err != nil {
-		return
-	}
-
 	if len(file.Imports) > 0 {
 		startPos, endPos = v.getImportBoundaries(file)
 		v.orderImports(file)
@@ -101,17 +96,11 @@ func (v *myVisitor) fixImports(file *ast.File) {
 	}
 
 	v.output = v.replaceImports(file, updatedImports, startPos, endPos)
-	err = v.validate(v.output)
+	err := v.validate(v.output)
 	if err != nil {
 		v.err = fmt.Errorf("generated code was invalid, err: %s", err)
 		return
 	}
-}
-
-// make sure the imports are valid and clean first
-func (v *myVisitor) preClean(file *ast.File) error {
-	v.source, v.err = commons.GoFmt(v.source)
-	return v.err
 }
 
 func (v *myVisitor) getImportBoundaries(file *ast.File) (startPos, endPos int) {
@@ -149,7 +138,7 @@ func (v *myVisitor) generateImportsFragment(file *ast.File) string {
 	stdLibFragment := ""
 	customFragment := ""
 
-	stdLibRegex := regexp.MustCompile(`(")[a-zA-Z/]+(")`)
+	stdLibRegex := regexp.MustCompile(`(")[a-zA-Z0-9/]+(")`)
 
 	// special case: single import
 	totalImports := len(file.Imports)
