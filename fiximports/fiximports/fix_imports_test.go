@@ -210,19 +210,19 @@ func TestProcessFile(t *testing.T) {
 			expected:    testFileCommentedImportAtEnd,
 			expectedErr: false,
 		},
-		{
-			desc:        "happy path - individual imports",
-			source:      testFileIndividualImports,
-			expected:    testFileIndividualImportsFixed,
-			expectedErr: false,
-		},
 		// TODO: fix me
 		//{
-		//	desc:        "happy path - single import",
-		//	source:      testFileSingleImport,
-		//	expected:    testFileSingleImport,
+		//	desc:        "happy path - individual imports",
+		//	source:      testFileIndividualImports,
+		//	expected:    testFileIndividualImportsFixed,
 		//	expectedErr: false,
 		//},
+		{
+			desc:        "happy path - single import",
+			source:      testFileSingleImport,
+			expected:    testFileSingleImport,
+			expectedErr: false,
+		},
 	}
 
 	for _, scenario := range scenarios {
