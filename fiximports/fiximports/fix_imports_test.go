@@ -161,28 +161,46 @@ func TestMyVisitor_replaceImports(t *testing.T) {
 func TestProcessFile(t *testing.T) {
 	scenarios := []struct {
 		desc        string
-		source      []byte
-		expected    []byte
+		source      string
+		expected    string
 		expectedErr bool
 	}{
 		{
 			desc:        "happy path - test file 1",
-			source:      []byte(testFile1),
-			expected:    []byte(testFile1Fixed),
+			source:      testFile1,
+			expected:    testFile1Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - test file 3",
-			source:      []byte(testFile3),
-			expected:    []byte(testFile3),
+			desc:        "happy path - no imports",
+			source:      testFileNoImports,
+			expected:    testFileNoImports,
+			expectedErr: false,
+		},
+		{
+			desc:        "happy path - dot import",
+			source:      testFileDotImport,
+			expected:    testFileDotImport,
+			expectedErr: false,
+		},
+		{
+			desc:        "happy path - blank",
+			source:      testFileBlankImport,
+			expected:    testFileBlankImport,
+			expectedErr: false,
+		},
+		{
+			desc:        "happy path - commented",
+			source:      testFileCommentedImport,
+			expected:    testFileCommentedImport,
 			expectedErr: false,
 		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.desc, func(t *testing.T) {
-			result, resultErr := processFile("filename.go", scenario.source)
-			assert.Equal(t, scenario.expected, result, scenario.desc)
+			result, resultErr := processFile("filename.go", []byte(scenario.source))
+			assert.Equal(t, scenario.expected, string(result), scenario.desc)
 			assert.Equal(t, scenario.expectedErr, resultErr != nil, scenario.desc)
 		})
 	}
@@ -238,7 +256,36 @@ import (
 
 func main() {}
 `
-var testFile3 = `package main
+
+var testFileNoImports = `package main
+
+func main() {}
+`
+
+var testFileDotImport = `package main
+
+import (
+	. "net/http/httputil"
+)
+
+func main() {}
+`
+
+var testFileBlankImport = `package main
+
+import (
+	_ "net/http/httputil"
+)
+
+func main() {}
+`
+
+var testFileCommentedImport = `package main
+
+import (
+	// commented
+	"net/http/httputil"
+)
 
 func main() {}
 `
