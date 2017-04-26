@@ -18,20 +18,28 @@ func TestMyVisitor_getImportBoundaries(t *testing.T) {
 		{
 			desc:             "file file 1",
 			input:            testFile1,
-			expectedStartPos: 24,
+			expectedStartPos: 23,
 			expectedEndPos:   93,
 		},
 		{
 			desc:             "file file 2",
 			input:            testFile2,
-			expectedStartPos: 24,
+			expectedStartPos: 23,
 			expectedEndPos:   77,
+		},
+		{
+			desc:             "comment at the end",
+			input:            testFileCommentedImportAtEnd,
+			expectedStartPos: 23,
+			expectedEndPos:   73,
 		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.desc, func(t *testing.T) {
-			visitor := &myVisitor{}
+			visitor := &myVisitor{
+				source: []byte(scenario.input),
+			}
 
 			file, err := parser.ParseFile(token.NewFileSet(), "test.go", scenario.input, parser.ParseComments)
 			assert.Nil(t, err)
@@ -73,7 +81,7 @@ func TestMyVisitor_generateImportsFragment(t *testing.T) {
 		{
 			desc:  "test file 1",
 			input: testFile1,
-			expected: `"flag"
+			expected: `	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -84,7 +92,7 @@ func TestMyVisitor_generateImportsFragment(t *testing.T) {
 		{
 			desc:  "test file 2",
 			input: testFile2,
-			expected: `"net/http"
+			expected: `	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 `,
@@ -146,6 +154,7 @@ func TestMyVisitor_replaceImports(t *testing.T) {
 		t.Run(scenario.desc, func(t *testing.T) {
 			visitor := &myVisitor{
 				fileSet: token.NewFileSet(),
+				source:  []byte(scenario.inputFile),
 			}
 
 			file, err := parser.ParseFile(visitor.fileSet, "test.go", scenario.inputFile, parser.ParseComments)
@@ -190,18 +199,38 @@ func TestProcessFile(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - commented",
-			source:      testFileCommentedImport,
-			expected:    testFileCommentedImport,
+			desc:        "happy path - commented above",
+			source:      testFileCommentedImportAbove,
+			expected:    testFileCommentedImportAbove,
 			expectedErr: false,
 		},
+		{
+			desc:        "happy path - commented at end",
+			source:      testFileCommentedImportAtEnd,
+			expected:    testFileCommentedImportAtEnd,
+			expectedErr: false,
+		},
+		{
+			desc:        "happy path - individual imports",
+			source:      testFileIndividualImports,
+			expected:    testFileIndividualImportsFixed,
+			expectedErr: false,
+		},
+		// TODO: fix me
+		//{
+		//	desc:        "happy path - single import",
+		//	source:      testFileSingleImport,
+		//	expected:    testFileSingleImport,
+		//	expectedErr: false,
+		//},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.desc, func(t *testing.T) {
 			result, resultErr := processFile("filename.go", []byte(scenario.source))
+
+			assert.Equal(t, scenario.expectedErr, resultErr != nil, "%s %v", scenario.desc, resultErr)
 			assert.Equal(t, scenario.expected, string(result), scenario.desc)
-			assert.Equal(t, scenario.expectedErr, resultErr != nil, scenario.desc)
 		})
 	}
 
@@ -265,6 +294,7 @@ func main() {}
 var testFileDotImport = `package main
 
 import (
+	"fmt"
 	. "net/http/httputil"
 )
 
@@ -274,18 +304,63 @@ func main() {}
 var testFileBlankImport = `package main
 
 import (
+	"fmt"
 	_ "net/http/httputil"
 )
 
 func main() {}
 `
 
-var testFileCommentedImport = `package main
+var testFileCommentedImportAbove = `package main
 
 import (
-	// commented
+	"fmt"
+	// comment above
 	"net/http/httputil"
 )
+
+func main() {}
+`
+
+var testFileCommentedImportAtEnd = `package main
+
+import (
+	"fmt"
+	"net/http/httputil" // comment on the end
+)
+
+func main() {}
+`
+
+var testFileIndividualImports = `package main
+
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "github.com/gogo/protobuf/gogoproto"
+
+import io "io"
+
+func main() {}
+`
+
+var testFileIndividualImportsFixed = `package main
+
+import (
+	"io"
+	"fmt"
+	"math"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	"github.com/golang/protobuf/proto"
+)
+
+func main() {}
+`
+
+var testFileSingleImport = `package main
+
+import "github.com/golang/protobuf/proto"
 
 func main() {}
 `
