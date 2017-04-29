@@ -12,11 +12,11 @@ import (
 )
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "\tfiximports [flags] # runs on package in current directory\n")
-	fmt.Fprintf(os.Stderr, "\tfiximports [flags] directory\n")
-	fmt.Fprintf(os.Stderr, "\tfiximports [flags] files... # must be a single package\n")
-	fmt.Fprintf(os.Stderr, "Flags:\n")
+	commons.LogError("Usage of %s:\n", os.Args[0])
+	commons.LogError("\tfiximports [flags] # runs on package in current directory\n")
+	commons.LogError("\tfiximports [flags] directory\n")
+	commons.LogError("\tfiximports [flags] files... # must be a single package\n")
+	commons.LogError("Flags:\n")
 	flag.PrintDefaults()
 }
 

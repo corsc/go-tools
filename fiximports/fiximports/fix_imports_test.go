@@ -184,11 +184,7 @@ func TestMyVisitor_replaceImports(t *testing.T) {
 				endPos:   scenario.endPos,
 			}
 
-			file, err := parser.ParseFile(visitor.fileSet, "test.go", scenario.inputFile, parser.ParseComments)
-			assert.Nil(t, err)
-
-			result := visitor.replaceImports(file, scenario.sortedImports)
-
+			result := visitor.replaceImports(scenario.sortedImports)
 			assert.Equal(t, scenario.expected, string(result), scenario.desc)
 		})
 	}
@@ -202,63 +198,63 @@ func TestProcessFile(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			desc:        "postest file 1",
+			desc:        "test file 1",
 			source:      testFile1,
 			expected:    testFile1Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "postest file 2",
+			desc:        "test file 2",
 			source:      testFile2,
 			expected:    testFile2Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "postest file 3",
+			desc:        "test file 3",
 			source:      testFile3,
 			expected:    testFile3Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "posno imports",
+			desc:        "no imports",
 			source:      testFileNoImports,
 			expected:    testFileNoImports,
 			expectedErr: false,
 		},
 		{
-			desc:        "posdot import",
+			desc:        "dot import",
 			source:      testFileDotImport,
 			expected:    testFileDotImport,
 			expectedErr: false,
 		},
 		{
-			desc:        "posblank",
+			desc:        "blank",
 			source:      testFileBlankImport,
 			expected:    testFileBlankImport,
 			expectedErr: false,
 		},
 		{
-			desc:        "poscommented above",
+			desc:        "commented above",
 			source:      testFileCommentedImportAbove,
 			expected:    testFileCommentedImportAbove,
 			expectedErr: false,
 		},
 		{
-			desc:        "poscommented at end",
+			desc:        "commented at end",
 			source:      testFileCommentedImportAtEnd,
 			expected:    testFileCommentedImportAtEnd,
 			expectedErr: false,
 		},
 		{
-			desc:        "posindividual imports",
+			desc:        "individual imports",
 			source:      testFileIndividualImports,
 			expected:    testFileIndividualImportsFixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "possingle import",
+			desc:        "single import",
 			source:      testFileSingleImport,
-			expected:    testFileSingleImport,
+			expected:    testFileSingleImportFixed,
 			expectedErr: false,
 		},
 		{

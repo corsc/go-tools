@@ -29,8 +29,8 @@ func TestProcessAllDirs(t *testing.T) {
 			Name:    "excludesDir",
 			Exclude: `/excluded/`,
 			Result: []string{
-				dir + "/tests/fixtures/path_matcher/",
-				dir + "/tests/fixtures/path_matcher/included/",
+				dir + "/tests/fixtures/pathmatcher/",
+				dir + "/tests/fixtures/pathmatcher/included/",
 			},
 		},
 	}
@@ -39,7 +39,7 @@ func TestProcessAllDirs(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			matcher := regexp.MustCompile(test.Exclude)
 			matched := []string{}
-			processAllDirs("../tests/fixtures/path_matcher", matcher, "processAllDirs", func(path string) {
+			processAllDirs("../tests/fixtures/pathmatcher", matcher, "processAllDirs", func(path string) {
 				matched = append(matched, path)
 			})
 
@@ -139,9 +139,11 @@ github.com/corsc/go-tools/package-coverage/generator/generator.go:16.93,18.2 1 0
 		tempCoverageFilePath = "test-profile.cov"
 	)
 
-	tempCoverageFile, err := os.OpenFile(tempCoverageFilePath, os.O_WRONLY|os.O_CREATE, 0644)
+	tempCoverageFile, err := os.OpenFile(tempCoverageFilePath, os.O_WRONLY|os.O_CREATE, 0600)
 	assert.NoError(t, err)
-	defer os.Remove(tempCoverageFilePath)
+	defer func() {
+		_ = os.Remove(tempCoverageFilePath)
+	}()
 	_, err = tempCoverageFile.WriteString(sampleCoverageFile)
 	assert.NoError(t, err)
 	err = tempCoverageFile.Close()

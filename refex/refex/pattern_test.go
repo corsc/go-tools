@@ -151,7 +151,8 @@ func TestPattern_regex(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.transform, func(t *testing.T) {
 			pattern := &patternImpl{}
-			pattern.build(scenario.transform)
+			_, err := pattern.build(scenario.transform)
+			assert.Nil(t, err)
 
 			result, resultErr := pattern.regexp()
 			assert.Equal(t, scenario.expected, result.String())

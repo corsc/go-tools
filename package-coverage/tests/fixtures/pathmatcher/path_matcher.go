@@ -1,1 +1,5 @@
-package path_matcher
+package pathmatcher
+
+func init() {
+	// make this a valid package
+}

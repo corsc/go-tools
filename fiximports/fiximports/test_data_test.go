@@ -173,6 +173,15 @@ import "github.com/golang/protobuf/proto"
 func main() {}
 `
 
+var testFileSingleImportFixed = `package main
+
+import (
+	"github.com/golang/protobuf/proto"
+)
+
+func main() {}
+`
+
 var testFileExtraLine = `package main
 
 import (

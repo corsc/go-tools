@@ -80,7 +80,7 @@ func main() {
 			expectedErr: false,
 		},
 		{
-			desc: "happy path - remove import",
+			desc: "remove import",
 			in: `package mypackage
 
 			import (
@@ -94,7 +94,9 @@ func main() {
 			`,
 			expected: `package mypackage
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func main() {
 	fmt.Printf("Hello World")

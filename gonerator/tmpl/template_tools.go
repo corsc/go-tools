@@ -1,7 +1,7 @@
 package tmpl
 
 import (
-	"bytes"
+	"io"
 	"log"
 	"strings"
 	"text/template"
@@ -24,12 +24,12 @@ type TemplateData struct {
 }
 
 // Generate will populate the buffer with generated code using the supplied type and template
-func Generate(buffer *bytes.Buffer, data TemplateData, templateContent string) {
+func Generate(writer io.Writer, data TemplateData, templateContent string) {
 	masterTmpl, err := getTemplate().Parse(templateContent)
 	if err != nil {
 		log.Fatalf("error while parsing template: %s", err)
 	}
-	err = masterTmpl.Execute(buffer, data)
+	err = masterTmpl.Execute(writer, data)
 	if err != nil {
 		log.Fatalf("error while executing template: %s", err)
 	}
@@ -57,7 +57,7 @@ func getFuncMap() template.FuncMap {
 	}
 }
 
-func isNotFirst(len int, index int, insert string) string {
+func isNotFirst(_ int, index int, insert string) string {
 	if 0 == index {
 		return ""
 	}

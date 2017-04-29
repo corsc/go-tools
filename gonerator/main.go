@@ -21,10 +21,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
 
+	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/gonerator/gonerator"
 )
 
@@ -47,9 +47,9 @@ var (
 
 // Usage outputs the usage of this tool to std err
 func Usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "\tgonerator [flags] -i=T -t=template.tmpl [-o-T_gonerated.go]\n")
-	fmt.Fprintf(os.Stderr, "Flags:\n")
+	commons.LogError("Usage of %s:\n", os.Args[0])
+	commons.LogError("\tgonerator [flags] -i=T -t=template.tmpl [-o-T_gonerated.go]\n")
+	commons.LogError("Flags:\n")
 	flag.PrintDefaults()
 }
 

@@ -34,7 +34,7 @@ func main() {
 	var exclusions *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
-	flag.BoolVar(&quiet, "q", true, "quiet mode will supress the stdOut messages from go test")
+	flag.BoolVar(&quiet, "q", true, "quiet mode will suppress the stdOut messages from go test")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
 	flag.BoolVar(&doClean, "d", false, "clean")

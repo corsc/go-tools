@@ -115,7 +115,7 @@ func getStructFields(file *ast.File, sType *ast.StructType) []Field {
 // characters and Go string literal syntax.
 type structTag string
 
-// Get returns all the tags as a map
+// getAll returns all the tags as a map
 func (tag structTag) getAll() map[string]string {
 	tag = structTag(strings.Replace(string(tag), "`", "", -1))
 

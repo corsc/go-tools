@@ -42,10 +42,7 @@ func parseLines(raw string) map[string]*coverage {
 	}
 	close(fragmentCh)
 
-	select {
-	case <-doneCh:
-		// all fragments processed
-	}
+	<-doneCh
 
 	return output
 }

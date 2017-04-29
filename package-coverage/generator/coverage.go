@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -44,7 +45,7 @@ func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, quiet bool,
 	fakeTestFile := addFakeTest(path, packageName)
 	defer removeFakeTest(fakeTestFile)
 
-	err := execCoverage(path, coverageFilename, quiet, goTestArgs)
+	err := execCoverage(path, quiet, goTestArgs)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error generating coverage %s", err)
 	}
@@ -96,7 +97,7 @@ func createTestFile(packageName string, testFilename string) {
 		return
 	}
 
-	file, err := os.OpenFile(testFilename, os.O_RDWR|os.O_CREATE, 0666)
+	file, err := os.OpenFile(testFilename, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while creating test file %s", err)
 		return
@@ -130,8 +131,7 @@ func removeFakeTest(filename string) {
 }
 
 // essentially call `go test` to generate the coverage
-func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string) error {
-	command := "go"
+func execCoverage(dir string, quiet bool, goTestArgs []string) error {
 	arguments := []string{
 		"test",
 		"-coverprofile=" + coverageFilename,
@@ -139,7 +139,7 @@ func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string)
 
 	arguments = append(arguments, goTestArgs...)
 
-	cmd := exec.Command(command, arguments...)
+	cmd := exec.Command("go", arguments...)
 	cmd.Dir = dir
 
 	if !quiet {
@@ -161,17 +161,13 @@ func execCoverage(dir, coverageFilename string, quiet bool, goTestArgs []string)
 func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) error {
 	coverageTempFilename := coverageFilename + "~"
 
-	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0644)
+	coverageTempFile, err := os.OpenFile(coverageTempFilename, os.O_RDWR|os.O_CREATE, 0600)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while opening file %s, err: %s", coverageTempFilename, err)
 		return err
 	}
 
-	defer func() {
-		if err := coverageTempFile.Close(); err != nil {
-			utils.LogWhenVerbose("[coverage] cannot close temporary file %s: %s", coverageTempFilename, err)
-		}
-	}()
+	defer commons.CloseIO(coverageTempFile)
 
 	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
 	if err != nil {

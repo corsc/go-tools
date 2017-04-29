@@ -26,7 +26,7 @@ func GetGoFiles(filenames ...string) ([]string, error) {
 		if strings.HasSuffix(filename, ".go") {
 			files = append(files, filename)
 		} else {
-			return nil, fmt.Errorf("'%s' is not a Go file")
+			return nil, fmt.Errorf("'%s' is not a Go file", filename)
 		}
 	}
 

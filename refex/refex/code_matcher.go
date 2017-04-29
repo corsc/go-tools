@@ -121,7 +121,7 @@ func (m *codeMatcherImpl) buildParts() error {
 
 			after := m.extractCodeFromPattern(patternChunks[nextIndex])
 
-			// grab the first occurence or the last depending where we are in the pattern
+			// grab the first occurrence or the last depending where we are in the pattern
 			var loc int
 			if nextIndex == (len(patternChunks) - 1) {
 				loc = strings.LastIndex(code, after)

@@ -7,7 +7,6 @@ replaced when https://code.google.com/p/go/issues/detail?id=8768 is resolved.
 */
 
 import (
-	"fmt"
 	"go/build"
 	"log"
 	"os"
@@ -23,37 +22,18 @@ import (
 func GetAllPackagesUnderDirectory(pattern string) []string {
 	pkgs := matchPackagesInFS(pattern)
 	if len(pkgs) == 0 {
-		fmt.Fprintf(os.Stderr, "warning: %q matched no packages\n", pattern)
+		LogError("warning: %q matched no packages\n", pattern)
 	}
 	return pkgs
 }
 
 func matchPackagesInFS(pattern string) []string {
-	// Find directory to begin the scan.
-	// Could be smarter but this one optimization
-	// is enough for now, since ... is usually at the
-	// end of a path.
-	var dir string
+	dir := getStartDir(pattern)
 
-	i := strings.Index(pattern, "...")
-	if i != -1 {
-		dir, _ = path.Split(pattern[:i])
-	} else {
-		dir = pattern
-	}
-
-	// pattern begins with ./ or ../.
-	// path.Clean will discard the ./ but not the ../.
-	// We need to preserve the ./ for pattern matching
-	// and in the returned import paths.
-	prefix := ""
-	if strings.HasPrefix(pattern, "./") {
-		prefix = "./"
-	}
-	match := matchPattern(pattern)
+	prefix, match := buildMatcher(pattern)
 
 	var pkgs []string
-	filepath.Walk(dir, func(path string, fi os.FileInfo, err error) error {
+	err := filepath.Walk(dir, func(path string, fi os.FileInfo, err error) error {
 		if err != nil || !fi.IsDir() {
 			return nil
 		}
@@ -89,7 +69,43 @@ func matchPackagesInFS(pattern string) []string {
 		pkgs = append(pkgs, name)
 		return nil
 	})
+
+	if err != nil {
+		LogError("failed to walk the directories with err: %s", err)
+	}
+
 	return pkgs
+}
+
+// Find directory to begin the scan.
+// Could be smarter but this one optimization
+// is enough for now, since ... is usually at the
+// end of a path.
+func getStartDir(pattern string) string {
+	var dir string
+
+	i := strings.Index(pattern, "...")
+	if i != -1 {
+		dir, _ = path.Split(pattern[:i])
+	} else {
+		dir = pattern
+	}
+
+	return dir
+}
+
+func buildMatcher(pattern string) (string, func(name string) bool) {
+	// pattern begins with ./ or ../.
+	// path.Clean will discard the ./ but not the ../.
+	// We need to preserve the ./ for pattern matching
+	// and in the returned import paths.
+	prefix := ""
+	if strings.HasPrefix(pattern, "./") {
+		prefix = "./"
+	}
+	match := matchPattern(pattern)
+
+	return prefix, match
 }
 
 // matchPattern(pattern)(name) reports whether

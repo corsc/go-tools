@@ -33,7 +33,12 @@ func finder(basePath string, searchFor mode) ([]string, error) {
 		return nil, err
 	}
 
-	defer os.Chdir(oldCurrentDirectory)
+	defer func() {
+		changeDirErr := os.Chdir(oldCurrentDirectory)
+		if err != nil {
+			LogWhenVerbose("failed to restore original directory with error %s", changeDirErr)
+		}
+	}()
 
 	_ = filepath.Walk("./", func(path string, finfo os.FileInfo, err error) error {
 		if err != nil {

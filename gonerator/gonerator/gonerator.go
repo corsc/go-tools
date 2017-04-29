@@ -24,6 +24,7 @@ type Gonerator struct {
 	data tmpl.TemplateData
 }
 
+// Build is the main method of this struct/program
 func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string) {
 	g.data = tmpl.TemplateData{
 		TypeName:     typeName,
@@ -52,7 +53,7 @@ func (g *Gonerator) Build(dir string, typeName string, templateFile string, outp
 	g.buildTemplateData(extras)
 
 	g.generate(string(templateContent))
-	err = g.writeFile(dir, outputFile, typeName)
+	err = g.writeFile(dir, outputFile)
 	if err != nil {
 		os.Exit(-1)
 	}
@@ -88,6 +89,7 @@ func (g *Gonerator) printf(format string, args ...interface{}) {
 	fmt.Fprintf(&g.buf, format, args...)
 }
 
+// ParsePackageDir finds all go files in the supplied directory
 func (g *Gonerator) ParsePackageDir(directory string) {
 	pkg, err := build.Default.ImportDir(directory, 0)
 	if err != nil {
@@ -180,7 +182,7 @@ func (g *Gonerator) buildHeader() {
 	}
 }
 
-func (g *Gonerator) writeFile(dir string, filename string, typeName string) error {
+func (g *Gonerator) writeFile(dir string, filename string) error {
 	var src []byte
 	var errOut error
 	if isGo(filename) {
@@ -192,12 +194,12 @@ func (g *Gonerator) writeFile(dir string, filename string, typeName string) erro
 	outputName := filepath.Join(dir, strings.ToLower(filename))
 
 	directory := filepath.Dir(outputName)
-	err := os.MkdirAll(directory, 0755)
+	err := os.MkdirAll(directory, 0700)
 	if err != nil {
 		log.Fatalf("[%s] error creating destination directory: %s", g.data.OutputFile, err)
 	}
 
-	err = ioutil.WriteFile(outputName, src, 0644)
+	err = ioutil.WriteFile(outputName, src, 0600)
 	if err != nil {
 		log.Fatalf("[%s] error writing output: %s", g.data.OutputFile, err)
 	}

@@ -81,23 +81,22 @@ func do(fileName string, settings *settings) {
 		result = string(codeAsBytes)
 	}
 
-	var writer io.Writer
+	var writer io.WriteCloser
 	if settings.displayOnly {
 		writer = os.Stdout
 	} else {
-		writer, err = os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC, 0644)
+		writer, err = os.OpenFile(fileName, os.O_WRONLY|os.O_TRUNC, 0600)
 		if err != nil {
 			exitWithError(err)
 		}
 
-		defer func() {
-			if err := writer.(io.Closer).Close(); err != nil {
-				exitWithError(err)
-			}
-		}()
-
+		defer commons.CloseIO(writer)
 	}
-	fmt.Fprint(writer, result)
+
+	_, err = fmt.Fprint(writer, result)
+	if err != nil {
+		commons.LogError("failed to write to writer with err: %s", err)
+	}
 }
 
 func sanityCheck(settings *settings, fileName string) {
@@ -115,6 +114,6 @@ func sanityCheck(settings *settings, fileName string) {
 }
 
 func exitWithError(err error) {
-	fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+	commons.LogError("Error: %s\n", err)
 	os.Exit(1)
 }

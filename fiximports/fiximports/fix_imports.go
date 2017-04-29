@@ -22,21 +22,21 @@ func ProcessFiles(files []string) {
 	for _, filename := range files {
 		source, err := ioutil.ReadFile(filename)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "skipping file '%s': failed to read with err err: %v\n", filename, err)
+			commons.LogError("skipping file '%s': failed to read with err err: %v\n", filename, err)
 			continue
 		}
 
 		newCode, err := processFile(filename, source)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "skipping file '%s': failed to generate with err err: %v\n", filename, err)
+			commons.LogError("skipping file '%s': failed to generate with err err: %v\n", filename, err)
 			continue
 		}
 
 		if string(source) != string(newCode) {
 			fmt.Fprintf(os.Stdout, "%s\n", filename)
-			err = ioutil.WriteFile(filename, newCode, 0644)
+			err = ioutil.WriteFile(filename, newCode, 0600)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "skipping file '%s': failed to write with err err: %v\n", filename, err)
+				commons.LogError("skipping file '%s': failed to write with err err: %v\n", filename, err)
 				continue
 			}
 		}
@@ -109,7 +109,7 @@ func (v *myVisitor) updateFile(file *ast.File) {
 		v.orderImports(file)
 		updatedImports = v.generateImportsFragment(file)
 	}
-	v.output = v.replaceImports(file, updatedImports)
+	v.output = v.replaceImports(updatedImports)
 
 	err := v.validate(v.output)
 	if err != nil {
@@ -128,24 +128,11 @@ func (v *myVisitor) generateImportsFragment(file *ast.File) string {
 
 	stdLibRegex := regexp.MustCompile(`(")[a-zA-Z0-9/]+(")`)
 
-	// special case: single import
-	totalImports := len(file.Imports)
-
 	for _, thisImport := range file.Imports {
 		if stdLibRegex.MatchString(thisImport.Path.Value) {
-			if totalImports == 1 {
-				stdLibFragment += "import "
-			} else {
-				stdLibFragment += "\t"
-			}
-			stdLibFragment += v.buildImportLine(thisImport)
+			stdLibFragment += "\t" + v.buildImportLine(thisImport)
 		} else {
-			if totalImports == 1 {
-				customFragment += "import "
-			} else {
-				customFragment += "\t"
-			}
-			customFragment += v.buildImportLine(thisImport)
+			customFragment += "\t" + v.buildImportLine(thisImport)
 		}
 	}
 
@@ -154,14 +141,9 @@ func (v *myVisitor) generateImportsFragment(file *ast.File) string {
 		padding = string(lineBreak)
 	}
 
-	output := ""
-	if totalImports == 1 {
-		output = stdLibFragment + padding + customFragment
-	} else {
-		output = "import (" + string(lineBreak)
-		output += stdLibFragment + padding + customFragment
-		output += ")" + string(lineBreak)
-	}
+	output := "import (" + string(lineBreak)
+	output += stdLibFragment + padding + customFragment
+	output += ")" + string(lineBreak)
 
 	return output
 }
@@ -215,7 +197,7 @@ func (v *myVisitor) nameIsRedundant(name string, path string) bool {
 	return false
 }
 
-func (v *myVisitor) replaceImports(file *ast.File, newImports string) []byte {
+func (v *myVisitor) replaceImports(newImports string) []byte {
 	var output []byte
 
 	// replace the imports section
