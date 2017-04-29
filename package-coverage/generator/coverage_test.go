@@ -29,8 +29,8 @@ func TestProcessAllDirs(t *testing.T) {
 			Name:    "excludesDir",
 			Exclude: `/excluded/`,
 			Result: []string{
-				dir + "/tests/fixtures/pathmatcher/",
-				dir + "/tests/fixtures/pathmatcher/included/",
+				dir + "/test-data/pathmatcher/",
+				dir + "/test-data/pathmatcher/included/",
 			},
 		},
 	}
@@ -39,7 +39,7 @@ func TestProcessAllDirs(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			matcher := regexp.MustCompile(test.Exclude)
 			matched := []string{}
-			processAllDirs("../tests/fixtures/pathmatcher", matcher, "processAllDirs", func(path string) {
+			processAllDirs("../test-data/pathmatcher", matcher, "processAllDirs", func(path string) {
 				matched = append(matched, path)
 			})
 

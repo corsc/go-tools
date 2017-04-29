@@ -15,9 +15,9 @@ func TestFindAllGoDirs(t *testing.T) {
 		dir + "package-coverage/",
 		dir + "package-coverage/generator/",
 		dir + "package-coverage/parser/",
-		dir + "package-coverage/tests/fixtures/pathmatcher/",
-		dir + "package-coverage/tests/fixtures/pathmatcher/excluded/",
-		dir + "package-coverage/tests/fixtures/pathmatcher/included/",
+		dir + "package-coverage/test-data/pathmatcher/",
+		dir + "package-coverage/test-data/pathmatcher/excluded/",
+		dir + "package-coverage/test-data/pathmatcher/included/",
 		dir + "package-coverage/utils/",
 	}
 
