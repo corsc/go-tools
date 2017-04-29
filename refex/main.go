@@ -7,9 +7,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"strings"
-
 	"path/filepath"
+	"strings"
 
 	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/refex/refex"

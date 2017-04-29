@@ -1,6 +1,7 @@
 package fiximports
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -8,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMyVisitor_getImportBoundaries(t *testing.T) {
+func TestMyVisitor_walk(t *testing.T) {
 	scenarios := []struct {
 		desc             string
 		input            string
@@ -18,35 +19,42 @@ func TestMyVisitor_getImportBoundaries(t *testing.T) {
 		{
 			desc:             "file file 1",
 			input:            testFile1,
-			expectedStartPos: 23,
-			expectedEndPos:   93,
+			expectedStartPos: 14,
+			expectedEndPos:   95,
 		},
 		{
 			desc:             "file file 2",
 			input:            testFile2,
-			expectedStartPos: 23,
-			expectedEndPos:   77,
+			expectedStartPos: 14,
+			expectedEndPos:   79,
 		},
 		{
 			desc:             "comment at the end",
 			input:            testFileCommentedImportAtEnd,
-			expectedStartPos: 23,
-			expectedEndPos:   73,
+			expectedStartPos: 14,
+			expectedEndPos:   75,
+		},
+		{
+			desc:             "single import statements",
+			input:            testFileIndividualImports,
+			expectedStartPos: 14,
+			expectedEndPos:   160,
 		},
 	}
 
 	for _, scenario := range scenarios {
 		t.Run(scenario.desc, func(t *testing.T) {
-			visitor := &myVisitor{
-				source: []byte(scenario.input),
-			}
+			filename := "test.go"
+			fileSet := token.NewFileSet()
 
-			file, err := parser.ParseFile(token.NewFileSet(), "test.go", scenario.input, parser.ParseComments)
+			file, err := parser.ParseFile(fileSet, filename, scenario.input, parser.ParseComments)
 			assert.Nil(t, err)
 
-			start, end := visitor.getImportBoundaries(file)
-			assert.Equal(t, scenario.expectedStartPos, start)
-			assert.Equal(t, scenario.expectedEndPos, end)
+			visitor := newVisitor(filename, fileSet, []byte(scenario.input))
+			ast.Walk(visitor, file)
+
+			assert.Equal(t, scenario.expectedStartPos, visitor.startPos)
+			assert.Equal(t, scenario.expectedEndPos, visitor.endPos)
 		})
 	}
 }
@@ -81,20 +89,37 @@ func TestMyVisitor_generateImportsFragment(t *testing.T) {
 		{
 			desc:  "test file 1",
 			input: testFile1,
-			expected: `	"flag"
+			expected: `import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/corsc/go-tools/commons"
+)
 `,
 		},
 		{
 			desc:  "test file 2",
 			input: testFile2,
-			expected: `	"net/http"
+			expected: `import (
+	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
+)
+`,
+		},
+		{
+			desc:  "test file - individual imports",
+			input: testFileIndividualImports,
+			expected: `import (
+	"fmt"
+	"io"
+	"math"
+
+	_ "github.com/gogo/protobuf/gogoproto"
+	"github.com/golang/protobuf/proto"
+)
 `,
 		},
 	}
@@ -153,14 +178,16 @@ func TestMyVisitor_replaceImports(t *testing.T) {
 	for _, scenario := range scenarios {
 		t.Run(scenario.desc, func(t *testing.T) {
 			visitor := &myVisitor{
-				fileSet: token.NewFileSet(),
-				source:  []byte(scenario.inputFile),
+				fileSet:  token.NewFileSet(),
+				source:   []byte(scenario.inputFile),
+				startPos: scenario.startPos,
+				endPos:   scenario.endPos,
 			}
 
 			file, err := parser.ParseFile(visitor.fileSet, "test.go", scenario.inputFile, parser.ParseComments)
 			assert.Nil(t, err)
 
-			result := visitor.replaceImports(file, scenario.sortedImports, scenario.startPos, scenario.endPos)
+			result := visitor.replaceImports(file, scenario.sortedImports)
 
 			assert.Equal(t, scenario.expected, string(result), scenario.desc)
 		})
@@ -175,64 +202,69 @@ func TestProcessFile(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			desc:        "happy path - test file 1",
+			desc:        "postest file 1",
 			source:      testFile1,
 			expected:    testFile1Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - test file 2",
+			desc:        "postest file 2",
 			source:      testFile2,
 			expected:    testFile2Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - test file 3",
+			desc:        "postest file 3",
 			source:      testFile3,
 			expected:    testFile3Fixed,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - no imports",
+			desc:        "posno imports",
 			source:      testFileNoImports,
 			expected:    testFileNoImports,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - dot import",
+			desc:        "posdot import",
 			source:      testFileDotImport,
 			expected:    testFileDotImport,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - blank",
+			desc:        "posblank",
 			source:      testFileBlankImport,
 			expected:    testFileBlankImport,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - commented above",
+			desc:        "poscommented above",
 			source:      testFileCommentedImportAbove,
 			expected:    testFileCommentedImportAbove,
 			expectedErr: false,
 		},
 		{
-			desc:        "happy path - commented at end",
+			desc:        "poscommented at end",
 			source:      testFileCommentedImportAtEnd,
 			expected:    testFileCommentedImportAtEnd,
 			expectedErr: false,
 		},
-		// TODO: fix me
-		//{
-		//	desc:        "happy path - individual imports",
-		//	source:      testFileIndividualImports,
-		//	expected:    testFileIndividualImportsFixed,
-		//	expectedErr: false,
-		//},
 		{
-			desc:        "happy path - single import",
+			desc:        "posindividual imports",
+			source:      testFileIndividualImports,
+			expected:    testFileIndividualImportsFixed,
+			expectedErr: false,
+		},
+		{
+			desc:        "possingle import",
 			source:      testFileSingleImport,
 			expected:    testFileSingleImport,
+			expectedErr: false,
+		},
+		{
+			desc:        "extra line",
+			source:      testFileExtraLine,
+			expected:    testFileExtraLineFixed,
 			expectedErr: false,
 		},
 	}
@@ -247,162 +279,3 @@ func TestProcessFile(t *testing.T) {
 	}
 
 }
-
-var testFile1 = `package main
-
-import (
-	"github.com/corsc/go-tools/commons"
-
-	"flag"
-	"fmt"
-	"os"
-	"strings"
-)
-
-func main() {}
-`
-
-var testFile1Fixed = `package main
-
-import (
-	"flag"
-	"fmt"
-	"os"
-	"strings"
-
-	"github.com/corsc/go-tools/commons"
-)
-
-func main() {}
-`
-
-var testFile2 = `package main
-
-import (
-	"net/http/httptest"
-	"net/http"
-	"net/http/httputil"
-)
-
-func main() {}
-`
-
-var testFile2Fixed = `package main
-
-import (
-	"net/http"
-	"net/http/httptest"
-	"net/http/httputil"
-)
-
-func main() {}
-`
-
-var testFile3 = `package main
-
-import (
-	"crypto/hmac"
-	"crypto/subtle"
-	"fmt"
-	"math"
-	"time"
-	"crypto/sha256"
-	"encoding/base64"
-)
-
-func main() {}
-`
-
-var testFile3Fixed = `package main
-
-import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"crypto/subtle"
-	"encoding/base64"
-	"fmt"
-	"math"
-	"time"
-)
-
-func main() {}
-`
-
-var testFileNoImports = `package main
-
-func main() {}
-`
-
-var testFileDotImport = `package main
-
-import (
-	"fmt"
-	. "net/http/httputil"
-)
-
-func main() {}
-`
-
-var testFileBlankImport = `package main
-
-import (
-	"fmt"
-	_ "net/http/httputil"
-)
-
-func main() {}
-`
-
-var testFileCommentedImportAbove = `package main
-
-import (
-	"fmt"
-	// comment above
-	"net/http/httputil"
-)
-
-func main() {}
-`
-
-var testFileCommentedImportAtEnd = `package main
-
-import (
-	"fmt"
-	"net/http/httputil" // comment on the end
-)
-
-func main() {}
-`
-
-var testFileIndividualImports = `package main
-
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import _ "github.com/gogo/protobuf/gogoproto"
-
-import io "io"
-
-func main() {}
-`
-
-var testFileIndividualImportsFixed = `package main
-
-import (
-	"io"
-	"fmt"
-	"math"
-
-	_ "github.com/gogo/protobuf/gogoproto"
-	"github.com/golang/protobuf/proto"
-)
-
-func main() {}
-`
-
-var testFileSingleImport = `package main
-
-import "github.com/golang/protobuf/proto"
-
-func main() {}
-`

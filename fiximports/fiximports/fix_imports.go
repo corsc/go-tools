@@ -10,7 +10,6 @@ import (
 	"os"
 	"regexp"
 	"sort"
-
 	"strings"
 
 	"github.com/corsc/go-tools/commons"
@@ -33,33 +32,50 @@ func ProcessFiles(files []string) {
 			continue
 		}
 
-		err = ioutil.WriteFile(filename, newCode, 0644)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "skipping file '%s': failed to write with err err: %v\n", filename, err)
-			continue
+		if string(source) != string(newCode) {
+			fmt.Fprintf(os.Stdout, "%s\n", filename)
+			err = ioutil.WriteFile(filename, newCode, 0644)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "skipping file '%s': failed to write with err err: %v\n", filename, err)
+				continue
+			}
 		}
 	}
 }
 
 func processFile(filename string, source []byte) ([]byte, error) {
 	fileSet := token.NewFileSet()
+	// TODO: change to 	parser.ParseDir() and use filter for single file mode
 	file, err := parser.ParseFile(fileSet, filename, source, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
 
-	visitor := &myVisitor{
-		filename: filename,
-		fileSet:  fileSet,
-		source:   source,
+	// special case: no imports
+	if len(file.Imports) == 0 {
+		return source, nil
 	}
+
+	visitor := newVisitor(filename, fileSet, source)
 	ast.Walk(visitor, file)
 
 	if visitor.err != nil {
 		return nil, visitor.err
 	}
 
+	visitor.updateFile(file)
+
 	return visitor.output, nil
+}
+
+func newVisitor(filename string, fileSet *token.FileSet, source []byte) *myVisitor {
+	return &myVisitor{
+		filename: filename,
+		fileSet:  fileSet,
+		source:   source,
+		startPos: math.MaxInt32,
+		endPos:   -1,
+	}
 }
 
 // implements ast.Visitor
@@ -69,13 +85,15 @@ type myVisitor struct {
 	source   []byte
 	output   []byte
 	err      error
+	startPos int
+	endPos   int
 }
 
 // Visit implements ast.Visitor
 func (v *myVisitor) Visit(node ast.Node) ast.Visitor {
 	switch statement := node.(type) {
-	case *ast.File:
-		v.fixImports(statement)
+	case *ast.GenDecl:
+		v.detectImportDecl(statement)
 
 	default:
 		// intentionally do nothing
@@ -84,50 +102,20 @@ func (v *myVisitor) Visit(node ast.Node) ast.Visitor {
 	return v
 }
 
-func (v *myVisitor) fixImports(file *ast.File) {
-	startPos := 0
-	endPos := 0
+func (v *myVisitor) updateFile(file *ast.File) {
 	updatedImports := ""
 
 	if len(file.Imports) > 0 {
-		startPos, endPos = v.getImportBoundaries(file)
 		v.orderImports(file)
 		updatedImports = v.generateImportsFragment(file)
 	}
+	v.output = v.replaceImports(file, updatedImports)
 
-	v.output = v.replaceImports(file, updatedImports, startPos, endPos)
 	err := v.validate(v.output)
 	if err != nil {
 		v.err = fmt.Errorf("generated code was invalid, err: %s", err)
 		return
 	}
-}
-
-func (v *myVisitor) getImportBoundaries(file *ast.File) (startPos, endPos int) {
-	startPos = math.MaxInt32
-	endPos = -1
-
-	for _, thisImport := range file.Imports {
-		// Run to end of line in both directions if not at line start/end.
-		thisStartPos, thisEndPos := int(thisImport.Pos()), int(thisImport.Pos())+1
-		for thisStartPos > 0 && v.source[thisStartPos-1] != lineBreak {
-			thisStartPos--
-		}
-
-		for thisEndPos < len(v.source) && v.source[thisEndPos-1] != lineBreak {
-			thisEndPos++
-		}
-
-		if thisStartPos < startPos {
-			startPos = thisStartPos
-		}
-
-		if thisEndPos > endPos {
-			endPos = thisEndPos
-		}
-	}
-
-	return
 }
 
 func (v *myVisitor) orderImports(file *ast.File) {
@@ -165,7 +153,17 @@ func (v *myVisitor) generateImportsFragment(file *ast.File) string {
 	if len(stdLibFragment) > 0 && len(customFragment) > 0 {
 		padding = string(lineBreak)
 	}
-	return stdLibFragment + padding + customFragment
+
+	output := ""
+	if totalImports == 1 {
+		output = stdLibFragment + padding + customFragment
+	} else {
+		output = "import (" + string(lineBreak)
+		output += stdLibFragment + padding + customFragment
+		output += ")" + string(lineBreak)
+	}
+
+	return output
 }
 
 func (v *myVisitor) buildImportLine(thisImport *ast.ImportSpec) string {
@@ -178,8 +176,12 @@ func (v *myVisitor) buildImportLine(thisImport *ast.ImportSpec) string {
 
 	if thisImport.Name != nil {
 		name := strings.TrimSpace(thisImport.Name.Name)
-		if len(name) > 0 {
-			output += name + " "
+
+		// remove redundant names
+		if !v.nameIsRedundant(name, thisImport.Path.Value) {
+			if len(name) > 0 {
+				output += name + " "
+			}
 		}
 	}
 
@@ -193,13 +195,33 @@ func (v *myVisitor) buildImportLine(thisImport *ast.ImportSpec) string {
 	return output + string(lineBreak)
 }
 
-func (v *myVisitor) replaceImports(file *ast.File, newImports string, startPos, endPos int) []byte {
+func (v *myVisitor) nameIsRedundant(name string, path string) bool {
+	// case: `import io "io"`
+	// compare name and path after trimming the quotes
+	if name == path[1:len(path)-1] {
+		return true
+	}
+
+	// case: `import proto "github.com/golang/protobuf/proto"`
+	lastSlash := strings.LastIndex(path, "/")
+	if lastSlash > -1 {
+		// trim the slash and the quotes
+		pkgDir := path[lastSlash+1 : len(path)-1]
+		if name == pkgDir {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (v *myVisitor) replaceImports(file *ast.File, newImports string) []byte {
 	var output []byte
 
 	// replace the imports section
-	output = append(output, v.source[:startPos]...)
+	output = append(output, v.source[:v.startPos]...)
 	output = append(output, newImports...)
-	output = append(output, v.source[endPos:]...)
+	output = append(output, v.source[v.endPos:]...)
 
 	return output
 }
@@ -211,17 +233,23 @@ func (v *myVisitor) validate(newCode []byte) error {
 	return err
 }
 
-// implements sort.Interface for []*ast.ImportSpec
-type byImportPath []*ast.ImportSpec
+func (v *myVisitor) detectImportDecl(decl *ast.GenDecl) {
+	if decl.Tok != token.IMPORT {
+		return
+	}
 
-func (a byImportPath) Len() int {
-	return len(a)
-}
+	thisStartPos, thisEndPos := commons.GetLinePosFromPos(v.source, decl.Pos())
+	if thisStartPos < v.startPos {
+		v.startPos = thisStartPos
+	}
 
-func (a byImportPath) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
+	if decl.Rparen.IsValid() {
+		// override with `)` if exists
+		// NOTE: add 1 for the line break
+		thisEndPos = int(decl.Rparen) + 1
+	}
 
-func (a byImportPath) Less(i, j int) bool {
-	return a[i].Path.Value < a[j].Path.Value
+	if thisEndPos > v.endPos {
+		v.endPos = thisEndPos
+	}
 }

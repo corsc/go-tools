@@ -94,9 +94,7 @@ func main() {
 			`,
 			expected: `package mypackage
 
-import (
-	"fmt"
-)
+import "fmt"
 
 func main() {
 	fmt.Printf("Hello World")
