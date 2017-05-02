@@ -1,6 +1,8 @@
 package utils
 
-import "log"
+import (
+	"log"
+)
 
 // LogWhenVerbose will write debugging information to stdout when verbose mode is requested
 var LogWhenVerbose = func(msg string, args ...interface{}) {

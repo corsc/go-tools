@@ -1,6 +1,8 @@
 package gonerator
 
-import "go/ast"
+import (
+	"go/ast"
+)
 
 // File holds a single parsed file and associated data.
 type File struct {

@@ -1,6 +1,8 @@
 package refex
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+)
 
 // DoFile wraps Do() and loads the code from the filename supplied
 func DoFile(fileName string, before string, after string) (string, error) {

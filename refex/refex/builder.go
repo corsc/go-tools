@@ -1,6 +1,8 @@
 package refex
 
-import "errors"
+import (
+	"errors"
+)
 
 type codeBuilder interface {
 	build(beforeParts []*part, afterParts []*part) (string, error)

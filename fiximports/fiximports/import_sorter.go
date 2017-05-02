@@ -14,7 +14,9 @@
 
 package fiximports
 
-import "go/ast"
+import (
+	"go/ast"
+)
 
 // implements sort.Interface for []*ast.ImportSpec
 type byImportPath []*ast.ImportSpec

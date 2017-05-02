@@ -1,6 +1,8 @@
 package examples
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Example2 ...
 func Example2() {

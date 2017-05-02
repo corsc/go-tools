@@ -1,6 +1,8 @@
 package generator
 
-import "regexp"
+import (
+	"regexp"
+)
 
 // UnknownPackage ...
 const UnknownPackage = "unknown"

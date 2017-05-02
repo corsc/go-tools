@@ -1,6 +1,8 @@
 package refex
 
-import "strings"
+import (
+	"strings"
+)
 
 type codeMatcher interface {
 	match(code string, pattern pattern) ([]*match, error)

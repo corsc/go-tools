@@ -220,7 +220,7 @@ func (v *myVisitor) detectImportDecl(decl *ast.GenDecl) {
 		return
 	}
 
-	thisStartPos, thisEndPos := commons.GetLinePosFromPos(v.source, decl.Pos())
+	thisStartPos, thisEndPos := commons.GetLineBoundary(v.source, decl.Pos())
 	if thisStartPos < v.startPos {
 		v.startPos = thisStartPos
 	}
