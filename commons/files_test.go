@@ -82,22 +82,44 @@ func TestGetGoFiles(t *testing.T) {
 }
 
 func TestGetGoFilesFromDir(t *testing.T) {
-	input := "./testdata/get-go-files/"
-	expected := []string{
-		"testdata/get-go-files/a.go",
-		"testdata/get-go-files/b.go",
+	scenarios := []struct {
+		desc      string
+		input     string
+		expected  []string
+		expectErr bool
+	}{
+		{
+			desc:  "valid directory",
+			input: "./testdata/get-go-files/",
+			expected: []string{
+				"testdata/get-go-files/a.go",
+				"testdata/get-go-files/b.go",
+			},
+			expectErr: false,
+		},
+		{
+			desc:      "invalid directory",
+			input:     "/something/invalid",
+			expected:  []string{},
+			expectErr: true,
+		},
 	}
 
-	result, resultErr := GetGoFilesFromDir(input)
-	assert.Equal(t, expected, result)
-	assert.Nil(t, resultErr)
+	for _, scenario := range scenarios {
+		t.Run(scenario.desc, func(t *testing.T) {
+			result, resultErr := GetGoFilesFromDir(scenario.input)
+			assert.Equal(t, scenario.expected, result)
+			assert.Equal(t, scenario.expectErr, resultErr != nil)
+		})
+	}
 }
 
 func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 	scenarios := []struct {
-		desc     string
-		input    string
-		expected []string
+		desc      string
+		input     string
+		expected  []string
+		expectErr bool
 	}{
 		{
 			desc:  "valid dir with ...",
@@ -108,6 +130,7 @@ func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 				"testdata/get-go-files/c/d.go",
 				"testdata/get-go-files/c/e.go",
 			},
+			expectErr: false,
 		},
 		{
 			desc:  "valid dir without ...",
@@ -118,6 +141,13 @@ func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 				"testdata/get-go-files/c/d.go",
 				"testdata/get-go-files/c/e.go",
 			},
+			expectErr: false,
+		},
+		{
+			desc:      "invalid dir with ...",
+			input:     "./something/invalid/",
+			expected:  []string{},
+			expectErr: true,
 		},
 	}
 
@@ -125,7 +155,7 @@ func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 		t.Run(scenario.desc, func(t *testing.T) {
 			result, resultErr := GetGoFilesFromDirectoryRecursive(scenario.input)
 			assert.Equal(t, scenario.expected, result, scenario.desc)
-			assert.Nil(t, resultErr, scenario.desc)
+			assert.Equal(t, scenario.expectErr, resultErr != nil, scenario.desc)
 		})
 	}
 }

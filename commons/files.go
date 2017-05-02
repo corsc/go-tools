@@ -42,7 +42,7 @@ func GetGoFilesFromCurrentDir() ([]string, error) {
 func GetGoFilesFromDir(dirname string) ([]string, error) {
 	pkg, err := build.ImportDir(dirname, 0)
 	if err != nil {
-		return nil, err
+		return []string{}, err
 	}
 
 	return getGoFilesFromPackage(pkg, err)
@@ -56,10 +56,15 @@ func GetGoFilesFromDirectoryRecursive(dirname string) ([]string, error) {
 		dirname += "..."
 	}
 
-	for _, dirname := range GetAllPackagesUnderDirectory(dirname) {
+	packages := GetAllPackagesUnderDirectory(dirname)
+	if len(packages) == 0 {
+		return files, fmt.Errorf("no go files found in dir '%s'", dirname)
+	}
+
+	for _, dirname := range packages {
 		theseFiles, err := GetGoFilesFromDir(dirname)
 		if err != nil {
-			return nil, err
+			return []string{}, err
 		}
 		files = append(files, theseFiles...)
 	}
@@ -76,7 +81,7 @@ func getGoFilesFromPackage(pkg *build.Package, err error) ([]string, error) {
 			// Don't complain if the failure is due to no Go source files.
 			return files, nil
 		}
-		return nil, err
+		return files, err
 	}
 
 	files = append(files, pkg.GoFiles...)

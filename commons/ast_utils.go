@@ -14,13 +14,21 @@
 
 package commons
 
-import "go/token"
+import (
+	"go/token"
+)
 
 const lineBreak = '\n'
 
-// GetLinePosFromPos will return the start and end position of a line containing position pos
-func GetLinePosFromPos(source []byte, pos token.Pos) (int, int) {
+// GetLineBoundary will return the start and end position of a line containing position pos
+// NOTE: this method with panic if an invalid position is supplied
+func GetLineBoundary(source []byte, pos token.Pos) (int, int) {
 	// Run to end of line in both directions if not at line start/end.
+	charAtPos := source[pos]
+	if charAtPos == lineBreak {
+		return int(pos), int(pos)
+	}
+
 	startPos, endPos := int(pos), int(pos)+1
 	for startPos > 0 && source[startPos-1] != lineBreak {
 		startPos--
