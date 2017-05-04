@@ -1,6 +1,7 @@
 package fiximports
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -32,7 +33,7 @@ func ProcessFiles(files []string) {
 			continue
 		}
 
-		if string(source) != string(newCode) {
+		if bytes.Compare(source, newCode) != 0 {
 			fmt.Fprintf(os.Stdout, "%s\n", filename)
 			err = ioutil.WriteFile(filename, newCode, 0600)
 			if err != nil {
