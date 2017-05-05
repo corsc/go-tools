@@ -1,0 +1,13 @@
+package main
+
+import (
+	"crypto/hmac"
+	"crypto/subtle"
+	"fmt"
+	"math"
+	"time"
+	"crypto/sha256"
+	"encoding/base64"
+)
+
+func main() {}

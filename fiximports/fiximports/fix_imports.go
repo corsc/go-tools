@@ -6,6 +6,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"io/ioutil"
 	"math"
 	"os"
@@ -19,29 +20,40 @@ import (
 const lineBreak = '\n'
 
 // ProcessFiles will process the supplied files and attempt to fix the imports
-func ProcessFiles(files []string) {
+func ProcessFiles(files []string, outputWriter io.Writer) {
 	for _, filename := range files {
-		source, err := ioutil.ReadFile(filename)
+		originalCode, err := ioutil.ReadFile(filename)
 		if err != nil {
 			commons.LogError("skipping file '%s': failed to read with err err: %v\n", filename, err)
 			continue
 		}
 
-		newCode, err := processFile(filename, source)
+		newCode, err := processFile(filename, originalCode)
 		if err != nil {
 			commons.LogError("skipping file '%s': failed to generate with err err: %v\n", filename, err)
 			continue
 		}
 
-		if bytes.Compare(source, newCode) != 0 {
-			fmt.Fprintf(os.Stdout, "%s\n", filename)
-			err = ioutil.WriteFile(filename, newCode, 0600)
-			if err != nil {
-				commons.LogError("skipping file '%s': failed to write with err err: %v\n", filename, err)
-				continue
-			}
+		if outputWriter == nil {
+			updateSourceFile(filename, originalCode, newCode)
+		} else {
+			outputNewCode(outputWriter, newCode)
 		}
 	}
+}
+
+func updateSourceFile(filename string, originalCode, newCode []byte) {
+	if bytes.Compare(originalCode, newCode) != 0 {
+		fmt.Fprintf(os.Stdout, "%s\n", filename)
+		err := ioutil.WriteFile(filename, newCode, 0600)
+		if err != nil {
+			commons.LogError("skipping file '%s': failed to write with err err: %v\n", filename, err)
+		}
+	}
+}
+
+func outputNewCode(writer io.Writer, newCode []byte) {
+	fmt.Fprintf(writer, "%s", string(newCode))
 }
 
 func processFile(filename string, source []byte) ([]byte, error) {

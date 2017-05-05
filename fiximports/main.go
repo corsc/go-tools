@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -21,7 +22,10 @@ func usage() {
 }
 
 func main() {
+	updateFile := false
+
 	flag.Usage = usage
+	flag.BoolVar(&updateFile, "w", false, "write result to (source) file instead of stdout")
 	flag.Parse()
 
 	var filenames []string
@@ -55,5 +59,11 @@ func main() {
 		os.Exit(-1)
 	}
 
-	fiximports.ProcessFiles(filenames)
+	var outputWriter io.Writer
+	if !updateFile {
+		// default write to os.Stdout
+		outputWriter = os.Stdout
+	}
+
+	fiximports.ProcessFiles(filenames, outputWriter)
 }
