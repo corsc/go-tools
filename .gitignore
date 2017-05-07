@@ -1,5 +1,3 @@
-/gonerator/test/mytype_gonerated.go
-/package-coverage/test-data/acc.out
+/gonerator/test-data/mytype_gonerated.go
 /package-coverage/package-coverage
-*.iml
 .idea/*

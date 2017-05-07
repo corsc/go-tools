@@ -1,4 +1,4 @@
-package test
+package test_data
 
 // MyType ...
 //go:generate gonerator -i=MyType -t=template.tmpl -o=mytype_gonerated.go
