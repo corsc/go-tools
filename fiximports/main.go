@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/fiximports/fiximports"
@@ -42,31 +41,8 @@ func main() {
 	flag.BoolVar(&updateFile, "w", false, "write result to (source) file instead of stdout")
 	flag.Parse()
 
-	var filenames []string
-	var err error
-
-	switch flag.NArg() {
-	case 0:
-		filenames, err = commons.GetGoFilesFromCurrentDir()
-
-	case 1:
-		arg := flag.Arg(0)
-		if strings.HasSuffix(arg, "/...") && commons.IsDir(arg[:len(arg)-4]) {
-			filenames, err = commons.GetGoFilesFromDirectoryRecursive(arg)
-
-		} else if commons.IsDir(arg) {
-			filenames, err = commons.GetGoFilesFromDir(arg)
-
-		} else if commons.FileExists(arg) {
-			filenames, err = commons.GetGoFiles(arg)
-
-		} else {
-			err = fmt.Errorf("'%s' did not resolve to a directory or file", arg)
-		}
-
-	default:
-		filenames, err = commons.GetGoFiles(flag.Args()...)
-	}
+	argsToFile := fiximports.FilesFromArgsFactory(flag.NArg())
+	filenames, err := argsToFile.FileNames()
 
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

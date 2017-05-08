@@ -15,9 +15,11 @@
 package fiximports
 
 import (
+	"bytes"
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -287,5 +289,30 @@ func TestProcessFile(t *testing.T) {
 			assert.Equal(t, scenario.expected, string(result), scenario.desc)
 		})
 	}
+}
 
+func TestProcessFile_errors(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		filename string
+	}{
+		{
+			desc:     "missing input file",
+			filename: "./test-data/something-invalid.go",
+		},
+		{
+			desc:     "not a go file",
+			filename: "./test-data/not-a-go-file.txt",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		t.Run(scenario.desc, func(t *testing.T) {
+			buffer := &bytes.Buffer{}
+			outputCapture := io.Writer(buffer)
+
+			ProcessFiles([]string{scenario.filename}, outputCapture)
+			assert.Equal(t, 0, buffer.Len(), scenario.desc)
+		})
+	}
 }

@@ -48,5 +48,4 @@ func TestUAT(t *testing.T) {
 			assert.Equal(t, expected, buffer.Bytes(), scenario.desc)
 		})
 	}
-
 }
