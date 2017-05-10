@@ -57,9 +57,9 @@ func ProcessFiles(files []string, outputWriter io.Writer) {
 }
 
 func updateSourceFile(filename string, originalCode, newCode []byte) {
-	if bytes.Compare(originalCode, newCode) != 0 {
+	if !bytes.Equal(originalCode, newCode) {
 		fmt.Fprintf(os.Stdout, "%s\n", filename)
-		err := ioutil.WriteFile(filename, newCode, 0600)
+		err := ioutil.WriteFile(filename, newCode, 0)
 		if err != nil {
 			commons.LogError("skipping file '%s': failed to write with err err: %v\n", filename, err)
 		}
