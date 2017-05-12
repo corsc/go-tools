@@ -53,22 +53,22 @@ func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag st
 }
 
 // this function will generate the test coverage for the supplied directory
-func generateCoverage(path string, exclusionsMatcher *regexp.Regexp, quiet bool, goTestArgs []string) {
+func generateCoverage(path string, exclusions *regexp.Regexp, quietMode bool, testArgs []string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
 	defer removeFakeTest(fakeTestFile)
 
-	err := execCoverage(path, quiet, goTestArgs)
+	err := execCoverage(path, quietMode, testArgs)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error generating coverage %s", err)
 	}
 
-	if exclusionsMatcher == nil {
+	if exclusions == nil {
 		return
 	}
 
-	err = filterCoverage(filepath.Join(path, coverageFilename), exclusionsMatcher)
+	err = filterCoverage(filepath.Join(path, coverageFilename), exclusions)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error filtering files: %s", err)
 	}

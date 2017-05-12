@@ -95,11 +95,29 @@ func main() {
 	}
 
 	if coverage {
+		var generatorDo generator.GeneratorDo
+
 		if singleDir {
-			generator.CoverageSingle(path, exclusions, quiet, goTestArgs)
+			generatorDo = &generator.SingleDirGenerator{
+				Generator: generator.Generator{
+					BasePath:  path,
+					Exclusion: exclusions,
+					QuietMode: quiet,
+					TestArgs:  goTestArgs,
+				},
+			}
 		} else {
-			generator.Coverage(path, exclusions, quiet, goTestArgs)
+			generatorDo = &generator.RecursiveGenerator{
+				Generator: generator.Generator{
+					BasePath:  path,
+					Exclusion: exclusions,
+					QuietMode: quiet,
+					TestArgs:  goTestArgs,
+				},
+			}
 		}
+
+		generatorDo.Do()
 	}
 
 	// switch back to start dir

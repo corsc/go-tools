@@ -16,19 +16,72 @@ package generator
 
 import (
 	"regexp"
+
+	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
 // UnknownPackage ...
 const UnknownPackage = "unknown"
 
-// Coverage will generate coverage for the supplied directory and any sub-directories that contain Go files
-func Coverage(basePath string, exclusionsMatcher *regexp.Regexp, quiet bool, goTestArgs []string) {
-	processAllDirs(basePath, exclusionsMatcher, "coverage", func(path string) {
-		generateCoverage(path, exclusionsMatcher, quiet, goTestArgs)
-	})
+// GeneratorDo defines the call API of the generators
+type GeneratorDo interface {
+	Do()
 }
 
-// CoverageSingle will generate coverage for the supplied directory (and ignore all sub directories)
-func CoverageSingle(basePath string, exclusionsMatcher *regexp.Regexp, quiet bool, goTestArgs []string) {
-	generateCoverage(basePath, exclusionsMatcher, quiet, goTestArgs)
+// SingleDirGenerator will generate coverage for a single directory (not recursive)
+type SingleDirGenerator struct {
+	Generator
+}
+
+// implements pathBuilder interface
+func (g *SingleDirGenerator) Do() {
+	g.do([]string{g.BasePath})
+}
+
+// RecursiveGenerator will recursively generated coverage for a tree of directories
+type RecursiveGenerator struct {
+	Generator
+}
+
+// implements pathBuilder interface
+func (g *RecursiveGenerator) Do() {
+	output := []string{}
+
+	paths, err := utils.FindAllGoDirs(g.BasePath)
+	if err != nil {
+		return
+	}
+
+	for _, path := range paths {
+		if g.Exclusion.FindString(path) != "" {
+			utils.LogWhenVerbose("[coverage] path '%s' skipped due to skipDir regex '%s'", path, g.Exclusion.String())
+			continue
+		}
+
+		output = append(output, path)
+	}
+
+	g.do(output)
+}
+
+// Generator is the basis for other coverage generators
+type Generator struct {
+	// BasePath directory to generate coverage for
+	BasePath string
+
+	// Exclusion is a regexp match allowing you to exclude/skip some directories from coverage calculation.
+	// NOTE: this is ignored in single coverage mode
+	Exclusion *regexp.Regexp
+
+	// QuietMode controls how verbose the logging is.  Useful for debugging
+	QuietMode bool
+
+	// TestArgs is arguments passed to the go test runner
+	TestArgs []string
+}
+
+func (g *Generator) do(paths []string) {
+	for _, path := range paths {
+		generateCoverage(path, g.Exclusion, g.QuietMode, g.TestArgs)
+	}
 }
