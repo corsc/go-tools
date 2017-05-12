@@ -70,7 +70,7 @@ func (g *Gonerator) Build(dir string, typeName string, templateFile string, outp
 
 	contents, err := g.gonerate(outputFile)
 	if dryRun {
-		fmt.Fprintf(os.Stdout, "\n%s" , string(contents))
+		fmt.Fprintf(os.Stdout, "\n%s", string(contents))
 	} else {
 		if err != nil {
 			os.Exit(-1)

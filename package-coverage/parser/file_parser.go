@@ -15,6 +15,7 @@
 package parser
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -32,6 +33,10 @@ type coverage struct {
 
 	childStatements int
 	childCovered    int
+}
+
+func (c *coverage) String() string {
+	return fmt.Sprintf("self: %d/%d / child: %d/%d", c.selfCovered, c.selfStatements, c.childCovered, c.childStatements)
 }
 
 // convert string contents of the coverage files into data structures

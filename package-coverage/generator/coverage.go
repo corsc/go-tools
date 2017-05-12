@@ -220,6 +220,7 @@ func filterCoverageContents(exclusionsMatcher *regexp.Regexp, in io.Reader, out 
 		fileName := line[:fileNameEndIndex]
 
 		if exclusionsMatcher.MatchString(fileName) {
+			utils.LogWhenVerbose("[coverage] skipped file %s", fileName)
 			continue
 		}
 
