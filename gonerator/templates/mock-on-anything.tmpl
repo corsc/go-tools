@@ -1,6 +1,8 @@
-{{- $typeName := .TypeName }}
+{{- $typeName := .TypeName -}}
 
-{{- range $methodIndex, $method := .Methods -}}
+package {{ index .Extras 0 }}
+
+{{ range $methodIndex, $method := .Methods -}}
 // On{{ $method.Name }} is a convenience function for mocking {{ $typeName }}
 func (_m *{{ $typeName }}) On{{ $method.Name }}(
 
@@ -25,7 +27,7 @@ func (_m *{{ $typeName }}) On{{ $method.Name }}(
 
 {{- $resultsLen := len $method.Results }}
 {{- range $resultIndex, $result := $method.Results -}}
-    result{{- $resultIndex }} {{ $result.Type }}
+    result{{- $resultIndex }}
 
     {{- isNotLast $resultsLen $resultIndex ", "}}
 {{- end -}}
