@@ -1,0 +1,36 @@
+{{- $typeName := .TypeName }}
+
+{{- range $methodIndex, $method := .Methods -}}
+// On{{ $method.Name }} is a convenience function for mocking {{ $typeName }}
+func (_m *{{ $typeName }}) On{{ $method.Name }}(
+
+{{- $resultsLen := len $method.Results }}
+{{- range $resultIndex, $result := $method.Results -}}
+    result{{ $resultIndex }} {{ $result.Type }}
+
+    {{- isNotLast $resultsLen $resultIndex ", " }}
+{{- end -}}
+
+) *mock.Call {
+	return _m.Mock.On("{{ $method.Name }}",
+
+{{- $paramLen := len $method.Params }}
+{{- range $paramIndex, $param := $method.Params -}}
+    mock.Anything
+
+    {{- isNotLast $paramLen $paramIndex ", " -}}
+{{- end -}}
+
+	).Return(
+
+{{- $resultsLen := len $method.Results }}
+{{- range $resultIndex, $result := $method.Results -}}
+    result{{- $resultIndex }} {{ $result.Type }}
+
+    {{- isNotLast $resultsLen $resultIndex ", "}}
+{{- end -}}
+
+	)
+}
+
+{{ end -}}

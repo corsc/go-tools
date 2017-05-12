@@ -45,18 +45,19 @@ import (
 
 func main() {
 	setUp()
-	typeName, templateFile, outputFile, extras := getInputs()
+	getInputs()
 
 	dir := "./"
 	g := &gonerator.Gonerator{}
 	g.ParsePackageDir(dir)
-	g.Build(dir, typeName, templateFile, outputFile, extras)
+	g.Build(dir, *typeName, *templateFile, *outputFile, *extras, *dryRun)
 }
 
 var (
 	typeName     = flag.String("i", "", "type name; must be set")
 	templateFile = flag.String("t", "", "template file; must be set")
 	outputFile   = flag.String("o", "", "output file; must be set")
+	dryRun       = flag.Bool("d", false, "dry-run; output to stdOut instead of updating the file")
 	extras       = flag.String("e", "", "comma separated list of extra values; optional")
 )
 
@@ -73,7 +74,7 @@ func setUp() {
 	log.SetPrefix("gonerator: ")
 }
 
-func getInputs() (string, string, string, string) {
+func getInputs() {
 	flag.Usage = Usage
 	flag.Parse()
 
@@ -81,5 +82,4 @@ func getInputs() (string, string, string, string) {
 		flag.Usage()
 		os.Exit(2)
 	}
-	return *typeName, *templateFile, *outputFile, *extras
 }

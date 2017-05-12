@@ -39,7 +39,7 @@ type Gonerator struct {
 }
 
 // Build is the main method of this struct/program
-func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string) {
+func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string, dryRun bool) {
 	g.data = tmpl.TemplateData{
 		TypeName:     typeName,
 		TemplateFile: templateFile,
@@ -67,9 +67,19 @@ func (g *Gonerator) Build(dir string, typeName string, templateFile string, outp
 	g.buildTemplateData(extras)
 
 	g.generate(string(templateContent))
-	err = g.writeFile(dir, outputFile)
-	if err != nil {
-		os.Exit(-1)
+
+	contents, err := g.gonerate(outputFile)
+	if dryRun {
+		fmt.Fprintf(os.Stdout, "\n%s" , string(contents))
+	} else {
+		if err != nil {
+			os.Exit(-1)
+		}
+
+		err = g.writeFile(dir, outputFile, contents)
+		if err != nil {
+			os.Exit(-1)
+		}
 	}
 }
 
@@ -185,8 +195,8 @@ func (g *Gonerator) toBytes() []byte {
 
 func (g *Gonerator) buildHeader() {
 	if isGo(g.data.OutputFile) {
-		g.printf("// Code gonerated by \"github.com/myteksi/go/tools/gonerator\"\n// DO NOT EDIT\n")
-		g.printf("// @" + "generated \n") // this is separate to fool phabricator
+		g.printf("// Code gonerated by \"github.com/corsc/go-tools/gonerator\"\n// DO NOT EDIT\n")
+		g.printf("// @" + "generated \n")
 		g.printf("//\n")
 		g.printf("// Args:\n")
 		g.printf("// TypeName: %s\n", g.data.TypeName)
@@ -196,15 +206,14 @@ func (g *Gonerator) buildHeader() {
 	}
 }
 
-func (g *Gonerator) writeFile(dir string, filename string) error {
-	var src []byte
-	var errOut error
+func (g *Gonerator) gonerate(filename string) ([]byte, error) {
 	if isGo(filename) {
-		src, errOut = g.format()
-	} else {
-		src = g.toBytes()
+		return g.format()
 	}
+	return g.toBytes(), nil
+}
 
+func (g *Gonerator) writeFile(dir string, filename string, contents []byte) error {
 	outputName := filepath.Join(dir, strings.ToLower(filename))
 
 	directory := filepath.Dir(outputName)
@@ -213,12 +222,12 @@ func (g *Gonerator) writeFile(dir string, filename string) error {
 		log.Fatalf("[%s] error creating destination directory: %s", g.data.OutputFile, err)
 	}
 
-	err = ioutil.WriteFile(outputName, src, 0600)
+	err = ioutil.WriteFile(outputName, contents, 0600)
 	if err != nil {
 		log.Fatalf("[%s] error writing output: %s", g.data.OutputFile, err)
 	}
 
-	return errOut
+	return err
 }
 
 func isGo(filename string) bool {
