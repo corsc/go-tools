@@ -1,4 +1,4 @@
-package get_go_files
+package ggf
 
 // FakeB ...
 func FakeB() {

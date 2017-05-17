@@ -108,6 +108,7 @@ func TestGetGoFilesFromDir(t *testing.T) {
 			expected: []string{
 				"testdata/get-go-files/a.go",
 				"testdata/get-go-files/b.go",
+				"testdata/get-go-files/c_test.go",
 			},
 			expectErr: false,
 		},
@@ -141,6 +142,7 @@ func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 			expected: []string{
 				"testdata/get-go-files/a.go",
 				"testdata/get-go-files/b.go",
+				"testdata/get-go-files/c_test.go",
 				"testdata/get-go-files/c/d.go",
 				"testdata/get-go-files/c/e.go",
 			},
@@ -152,6 +154,7 @@ func TestGetGoFilesFromDirectoryRecursive(t *testing.T) {
 			expected: []string{
 				"testdata/get-go-files/a.go",
 				"testdata/get-go-files/b.go",
+				"testdata/get-go-files/c_test.go",
 				"testdata/get-go-files/c/d.go",
 				"testdata/get-go-files/c/e.go",
 			},
