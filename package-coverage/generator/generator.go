@@ -76,12 +76,12 @@ type Generator struct {
 	// QuietMode controls how verbose the logging is.  Useful for debugging
 	QuietMode bool
 
-	// TestArgs is arguments passed to the go test runner
-	TestArgs []string
+	// Tags is arguments passed to the go test runner
+	Tags string
 }
 
 func (g *Generator) do(paths []string) {
 	for _, path := range paths {
-		generateCoverage(path, g.Exclusion, g.QuietMode, g.TestArgs)
+		generateCoverage(path, g.Exclusion, g.QuietMode, g.Tags)
 	}
 }

@@ -53,13 +53,13 @@ func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag st
 }
 
 // this function will generate the test coverage for the supplied directory
-func generateCoverage(path string, exclusions *regexp.Regexp, quietMode bool, testArgs []string) {
+func generateCoverage(path string, exclusions *regexp.Regexp, quietMode bool, tags string) {
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
 	defer removeFakeTest(fakeTestFile)
 
-	err := execCoverage(path, quietMode, testArgs)
+	err := execCoverage(path, quietMode, tags)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error generating coverage %s", err)
 	}
@@ -145,13 +145,15 @@ func removeFakeTest(filename string) {
 }
 
 // essentially call `go test` to generate the coverage
-func execCoverage(dir string, quiet bool, goTestArgs []string) error {
+func execCoverage(dir string, quiet bool, tags string) error {
 	arguments := []string{
 		"test",
 		"-coverprofile=" + coverageFilename,
 	}
 
-	arguments = append(arguments, goTestArgs...)
+	if len(tags) > 0 {
+		arguments = append(arguments, `-tags="`+tags+`"`)
+	}
 
 	cmd := exec.Command("go", arguments...)
 	cmd.Dir = dir
