@@ -55,39 +55,59 @@ func PrintCoverageSingle(writer io.Writer, path string, minCoverage int, prefix 
 }
 
 func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPackage, minCoverage float64, prefix string, depth int) bool {
-	fmt.Fprintf(writer, "  %%		Statements	Package\n")
+	addLine(writer)
+	fmt.Fprintf(writer, header1Template, "")
+	fmt.Fprintf(writer, header2Template, "Cov%", "Stmts", "Cov%", "Stmts", "Package")
+	addLine(writer)
 
 	coverageOk := true
 	for _, pkg := range pkgs {
 		cover := coverageData[pkg]
-		covered, statements := getStats(cover)
 
 		pkgFormatted := strings.Replace(pkg, prefix, "", -1)
 		pkgDepth := strings.Count(pkgFormatted, "/")
 
 		if depth > 0 {
 			if pkgDepth <= depth {
-				if !addLinePrint(writer, pkgFormatted, covered, statements, minCoverage) {
+				if !addLinePrint(writer, pkgFormatted, cover, minCoverage) {
 					coverageOk = false
 				}
 			}
 		} else {
-			if !addLinePrint(writer, pkgFormatted, covered, statements, minCoverage) {
+			if !addLinePrint(writer, pkgFormatted, cover, minCoverage) {
 				coverageOk = false
 			}
 		}
 	}
-	fmt.Fprint(writer, "\n")
+	addLine(writer)
 
 	return coverageOk
 }
 
-func addLinePrint(writer io.Writer, pkgFormatted string, covered float64, statements float64, minCoverage float64) bool {
-	if covered < minCoverage {
-		fmt.Fprintf(writer, "\033[1;31m%2.2f		%5.0f		%s\033[0m\n", covered, statements, pkgFormatted)
+func addLine(writer io.Writer) {
+	for x := 0; x < 120; x++ {
+		fmt.Fprint(writer, "-")
+	}
+	fmt.Fprint(writer, "\n")
+}
+
+const (
+	header1Template = "|      Branch     |       Dir       | %-80s |\n"
+	header2Template = "| %6s | %6s | %6s | %6s | %-80s |\n"
+	lineTemplate    = "| %6.2f | %6.0f | %6.2f | %6.0f | %-80s |\n"
+	errStart        = "\033[1;31m"
+	errEnd          = "\033[0m"
+)
+
+func addLinePrint(writer io.Writer, pkgFormatted string, cover *coverage, minCoverage float64) bool {
+	sumCoverage, sumStmts := getSummaryValues(cover)
+	selfCoverage, selfStmts := getSelfValues(cover)
+
+	if sumCoverage < minCoverage {
+		fmt.Fprintf(writer, errStart+lineTemplate+errEnd, sumCoverage, sumStmts, selfCoverage, selfStmts, pkgFormatted)
 		return false
 	}
 
-	fmt.Fprintf(writer, "%2.2f		%5.0f		%s\n", covered, statements, pkgFormatted)
+	fmt.Fprintf(writer, lineTemplate, sumCoverage, sumStmts, selfCoverage, selfStmts, pkgFormatted)
 	return true
 }

@@ -73,10 +73,18 @@ func getSortedPackages(coverageData coverageByPackage) []string {
 	return output
 }
 
-// calculate the coverage and statement counts from the supplied data
-func getStats(cover *coverage) (float64, float64) {
+func getSummaryValues(cover *coverage) (float64, float64) {
 	stmts := float64(cover.selfStatements + cover.childStatements)
 	stmtsCovered := float64(cover.selfCovered + cover.childCovered)
+
+	covered := (stmtsCovered / stmts) * 100
+
+	return covered, stmts
+}
+
+func getSelfValues(cover *coverage) (float64, float64) {
+	stmts := float64(cover.selfStatements)
+	stmtsCovered := float64(cover.selfCovered)
 
 	covered := (stmtsCovered / stmts) * 100
 

@@ -65,7 +65,7 @@ func prepareAndSendToSlack(pkgs []string, coverageData coverageByPackage, webhoo
 
 	for _, pkg := range pkgs {
 		cover := coverageData[pkg]
-		covered, statements := getStats(cover)
+		covered, statements := getSummaryValues(cover)
 
 		pkgFormatted := strings.Replace(pkg, prefix, "", -1)
 		pkgDepth := strings.Count(pkgFormatted, "/")
