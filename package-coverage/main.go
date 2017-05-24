@@ -45,6 +45,7 @@ func main() {
 	prefix := ""
 	depth := 0
 	minCoverage := 0
+	tags := ""
 	var exclusions *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
@@ -59,11 +60,11 @@ func main() {
 	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output")
 	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all)")
 	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
+	flag.StringVar(&tags, "tags", ``, "go build tags to be added in go test calls")
 	flag.Parse()
 
 	startDir := utils.GetCurrentDir()
 	path := getPath()
-	goTestArgs := getGoTestArguments()
 
 	if verbose {
 		utils.LogWhenVerbose("Config:")
@@ -80,7 +81,6 @@ func main() {
 		utils.LogWhenVerbose("Min Coverage: %v", minCoverage)
 		utils.LogWhenVerbose("Start Dir: %v", startDir)
 		utils.LogWhenVerbose("Path: %v", path)
-		utils.LogWhenVerbose("Go Test Args: %v", goTestArgs)
 	} else {
 		utils.VerboseOff()
 	}
@@ -103,7 +103,7 @@ func main() {
 					BasePath:  path,
 					Exclusion: exclusions,
 					QuietMode: quiet,
-					TestArgs:  goTestArgs,
+					Tags:      tags,
 				},
 			}
 		} else {
@@ -112,7 +112,7 @@ func main() {
 					BasePath:  path,
 					Exclusion: exclusions,
 					QuietMode: quiet,
-					TestArgs:  goTestArgs,
+					Tags:      tags,
 				},
 			}
 		}
