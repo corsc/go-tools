@@ -26,7 +26,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/corsc/go-tools/commons"
+	"github.com/corsc/go-commons/iocloser"
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -183,7 +183,7 @@ func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) e
 		return err
 	}
 
-	defer commons.CloseIO(coverageTempFile)
+	defer iocloser.Close(coverageTempFile)
 
 	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
 	if err != nil {

@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/corsc/go-commons/iocloser"
 	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/refex/refex"
 )
@@ -104,7 +105,7 @@ func do(fileName string, settings *settings) {
 			exitWithError(err)
 		}
 
-		defer commons.CloseIO(writer)
+		defer iocloser.Close(writer)
 	}
 
 	_, err = fmt.Fprint(writer, result)

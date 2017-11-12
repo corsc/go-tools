@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/corsc/go-tools/commons"
+	"github.com/corsc/go-commons/iocloser"
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
@@ -121,7 +121,7 @@ func sendToSlack(webHook string, channelOverride string, attachments string) {
 	if err != nil {
 		panic(err)
 	}
-	defer commons.CloseIO(resp.Body)
+	defer iocloser.Close(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
