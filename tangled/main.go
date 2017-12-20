@@ -22,20 +22,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sort"
 )
 
 const (
 	keyDirect   = "Direct"
 	keyChild    = "Child"
-	keyStdLib   = "Standard"
-	keyVendored = "Vendored"
+	keyStdLib   = "Std Lib"
 	keyExternal = "External"
+	keyVendored = "Vendored"
 )
 
 func main() {
+	cfg := &config{}
+	setUsage(cfg)
 	flag.Parse()
+
 	if flag.NArg() == 0 {
-		log.Fatalf("usage: tangled [directory name]")
+		flag.Usage()
 	}
 
 	directory := flag.Arg(0)
@@ -43,7 +47,45 @@ func main() {
 
 	summary := buildSummary(deps)
 
-	printSummary(summary)
+	printOutput(cfg, summary)
+}
+
+func printOutput(cfg *config, in *stats) {
+	printSummary(in)
+
+	if cfg.listDirect {
+		printList(keyDirect, in.direct)
+	}
+	if cfg.listChild {
+		printList(keyChild, in.child)
+	}
+	if cfg.listStdLib {
+		printList(keyStdLib, in.stdLib)
+	}
+	if cfg.listExternal {
+		printList(keyExternal, in.external)
+	}
+	if cfg.listVendored {
+		printList(keyVendored, in.vendored)
+	}
+}
+
+func printList(title string, items map[string]struct{}) {
+	sortedItems := make([]string, 0, len(items))
+	for key := range items {
+		sortedItems = append(sortedItems, key)
+	}
+	sort.Strings(sortedItems)
+
+	header := "\n%-30s\n"
+	fmt.Printf(header, title)
+	fmt.Print("------------------------------\n")
+
+	template := "%s\n"
+	for _, item := range sortedItems {
+		fmt.Printf(template, item)
+	}
+	println()
 }
 
 func printSummary(in *stats) {
@@ -53,46 +95,54 @@ func printSummary(in *stats) {
 	fmt.Print("|---------------------------------------|\n")
 
 	template := "| %-30s | %4d |\n"
-	fmt.Printf(template, keyDirect, in.direct)
-	fmt.Printf(template, keyChild, in.child)
-	fmt.Printf(template, keyStdLib, in.stdLib)
-	fmt.Printf(template, keyVendored, in.vendored)
-	fmt.Printf(template, keyExternal, in.external)
+	fmt.Printf(template, keyDirect, len(in.direct))
+	fmt.Printf(template, keyChild, len(in.child))
+	fmt.Printf(template, keyStdLib, len(in.stdLib))
+	fmt.Printf(template, keyExternal, len(in.external))
+	fmt.Printf(template, keyVendored, len(in.vendored))
 	fmt.Print("|---------------------------------------|\n")
 }
 
 func buildSummary(deps *deps) *stats {
-	out := &stats{}
+	out := &stats{
+		direct  : map[string]struct{}{},
+		child   : map[string]struct{}{},
+		stdLib  : map[string]struct{}{},
+		vendored : map[string]struct{}{},
+		external : map[string]struct{}{},
+	}
 
-	out.direct = len(deps.DirectImports)
+	for _, thisDep := range deps.DirectImports {
+		out.direct[thisDep] = struct{}{}
+	}
 
 	for _, thisDep := range deps.IndirectImports {
 		if strings.HasPrefix(thisDep, "go/") {
-			out.stdLib++
+			out.stdLib[thisDep] = struct{}{}
 			continue
 		}
 
 		if strings.HasPrefix(thisDep, "vendor/golang_org/") {
-			out.stdLib++
+			out.stdLib[thisDep] = struct{}{}
 			continue
 		}
 
 		if !strings.Contains(thisDep, ".") {
-			out.stdLib++
+			out.stdLib[thisDep] = struct{}{}
 			continue
 		}
 
 		if strings.Contains(thisDep, "/vendor/") {
-			out.vendored++
+			out.vendored[thisDep] = struct{}{}
 			continue
 		}
 
 		if strings.Contains(thisDep, deps.BasePath) {
-			out.child++
+			out.child[thisDep] = struct{}{}
 			continue
 		}
 
-		out.external++
+		out.external[thisDep] = struct{}{}
 	}
 
 	return out
@@ -133,16 +183,32 @@ func goList(directory string) []byte {
 }
 
 type stats struct {
-	direct   int
-	child    int
-	stdLib   int
-	vendored int
-	external int
+	direct   map[string]struct{}
+	child    map[string]struct{}
+	stdLib   map[string]struct{}
+	vendored map[string]struct{}
+	external map[string]struct{}
 }
 
 // this is the JSON format returned by `go list --json`
 type deps struct {
-	BasePath string `json:"ImportPath"`
+	BasePath        string   `json:"ImportPath"`
 	DirectImports   []string `json:"Imports"`
 	IndirectImports []string `json:"Deps"`
+}
+
+type config struct {
+	listDirect   bool
+	listChild    bool
+	listStdLib   bool
+	listVendored bool
+	listExternal bool
+}
+
+func setUsage(cfg *config) {
+	flag.BoolVar(&cfg.listDirect, "direct", false, "list direct dependencies")
+	flag.BoolVar(&cfg.listChild, "child", false, "list child dependencies")
+	flag.BoolVar(&cfg.listStdLib, "std", false, "list standard library dependencies")
+	flag.BoolVar(&cfg.listVendored, "vendored", false, "list vendored dependencies")
+	flag.BoolVar(&cfg.listExternal, "external", false, "list external dependencies")
 }
