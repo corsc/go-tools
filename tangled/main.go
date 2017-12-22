@@ -16,21 +16,8 @@ package main
 
 import (
 	"flag"
-	"log"
-	"os/exec"
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"strings"
-	"sort"
-)
 
-const (
-	keyDirect   = "Direct"
-	keyChild    = "Child"
-	keyStdLib   = "Std Lib"
-	keyExternal = "External"
-	keyVendored = "Vendored"
+	"github.com/corsc/go-tools/tangled/internal"
 )
 
 func main() {
@@ -43,158 +30,36 @@ func main() {
 	}
 
 	directory := flag.Arg(0)
-	deps := getDependencyList(directory)
+	deps := internal.GetDependencyList(directory)
 
-	summary := buildSummary(deps)
+	summary := internal.BuildSummary(deps)
 
 	printOutput(cfg, summary)
 }
 
-func printOutput(cfg *config, in *stats) {
-	printSummary(in)
+func printOutput(cfg *config, in *internal.Summary) {
+	if cfg.summaryCSV {
+		internal.PrintSummaryCSV(in)
+		return
+	}
+
+	internal.PrintSummary(in)
 
 	if cfg.listDirect {
-		printList(keyDirect, in.direct)
+		internal.PrintDirect(in)
 	}
 	if cfg.listChild {
-		printList(keyChild, in.child)
+		internal.PrintChild(in)
 	}
 	if cfg.listStdLib {
-		printList(keyStdLib, in.stdLib)
+		internal.PrintStdLib(in)
 	}
 	if cfg.listExternal {
-		printList(keyExternal, in.external)
+		internal.PrintExternal(in)
 	}
 	if cfg.listVendored {
-		printList(keyVendored, in.vendored)
+		internal.PrintVendored(in)
 	}
-}
-
-func printList(title string, items map[string]struct{}) {
-	sortedItems := make([]string, 0, len(items))
-	for key := range items {
-		sortedItems = append(sortedItems, key)
-	}
-	sort.Strings(sortedItems)
-
-	header := "\n%-30s\n"
-	fmt.Printf(header, title)
-	fmt.Print("------------------------------\n")
-
-	template := "%s\n"
-	for _, item := range sortedItems {
-		fmt.Printf(template, item)
-	}
-	println()
-}
-
-func printSummary(in *stats) {
-	fmt.Print("|---------------------------------------|\n")
-	header := "| %-30s | %s |\n"
-	fmt.Printf(header, "Count", "Type")
-	fmt.Print("|---------------------------------------|\n")
-
-	template := "| %-30s | %4d |\n"
-	fmt.Printf(template, keyDirect, len(in.direct))
-	fmt.Printf(template, keyChild, len(in.child))
-	fmt.Printf(template, keyStdLib, len(in.stdLib))
-	fmt.Printf(template, keyExternal, len(in.external))
-	fmt.Printf(template, keyVendored, len(in.vendored))
-	fmt.Print("|---------------------------------------|\n")
-}
-
-func buildSummary(deps *deps) *stats {
-	out := &stats{
-		direct  : map[string]struct{}{},
-		child   : map[string]struct{}{},
-		stdLib  : map[string]struct{}{},
-		vendored : map[string]struct{}{},
-		external : map[string]struct{}{},
-	}
-
-	for _, thisDep := range deps.DirectImports {
-		out.direct[thisDep] = struct{}{}
-	}
-
-	for _, thisDep := range deps.IndirectImports {
-		if strings.HasPrefix(thisDep, "go/") {
-			out.stdLib[thisDep] = struct{}{}
-			continue
-		}
-
-		if strings.HasPrefix(thisDep, "vendor/golang_org/") {
-			out.stdLib[thisDep] = struct{}{}
-			continue
-		}
-
-		if !strings.Contains(thisDep, ".") {
-			out.stdLib[thisDep] = struct{}{}
-			continue
-		}
-
-		if strings.Contains(thisDep, "/vendor/") {
-			out.vendored[thisDep] = struct{}{}
-			continue
-		}
-
-		if strings.Contains(thisDep, deps.BasePath) {
-			out.child[thisDep] = struct{}{}
-			continue
-		}
-
-		out.external[thisDep] = struct{}{}
-	}
-
-	return out
-}
-
-func getDependencyList(directory string) *deps {
-	bytes := goList(directory)
-
-	out := &deps{}
-	err := json.Unmarshal(bytes, out)
-	if err != nil {
-		log.Fatalf("failed to parse go list data with err %s", err)
-	}
-
-	return out
-}
-
-func goList(directory string) []byte {
-	cmd := exec.Command("go", "list", "--json")
-	cmd.Dir = directory
-
-	output := &bytes.Buffer{}
-	catchErr := &bytes.Buffer{}
-
-	cmd.Stdout = output
-	cmd.Stderr = catchErr
-
-	err := cmd.Run()
-	if err != nil {
-		log.Fatalf("failed to get deps from go list with err %s", err)
-	}
-
-	if catchErr.Len() > 0 {
-		log.Fatalf("failed to get deps from go list with err %s", err)
-	}
-
-	return output.Bytes()
-}
-
-type stats struct {
-	direct   map[string]struct{}
-	child    map[string]struct{}
-	stdLib   map[string]struct{}
-	vendored map[string]struct{}
-	external map[string]struct{}
-}
-
-// this is the JSON format returned by `go list --json`
-type deps struct {
-	BasePath        string   `json:"ImportPath"`
-	DirectImports   []string `json:"Imports"`
-	IndirectImports []string `json:"Deps"`
 }
 
 type config struct {
@@ -203,6 +68,7 @@ type config struct {
 	listStdLib   bool
 	listVendored bool
 	listExternal bool
+	summaryCSV   bool
 }
 
 func setUsage(cfg *config) {
@@ -211,4 +77,5 @@ func setUsage(cfg *config) {
 	flag.BoolVar(&cfg.listStdLib, "std", false, "list standard library dependencies")
 	flag.BoolVar(&cfg.listVendored, "vendored", false, "list vendored dependencies")
 	flag.BoolVar(&cfg.listExternal, "external", false, "list external dependencies")
+	flag.BoolVar(&cfg.summaryCSV, "scsv", false, "print summary as CSV (overrides other options)")
 }
