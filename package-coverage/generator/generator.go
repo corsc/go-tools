@@ -16,6 +16,8 @@ package generator
 
 import (
 	"regexp"
+	"strings"
+	"sync"
 
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
@@ -46,19 +48,30 @@ type RecursiveGenerator struct {
 // implements pathBuilder interface
 func (g *RecursiveGenerator) Do() {
 	paths := []string{}
+	dedupeMap := map[string]struct{}{}
 
-	paths, err := utils.FindAllGoDirs(g.BasePath)
+	foundPaths, err := utils.FindAllGoDirs(g.BasePath)
 	if err != nil {
 		return
 	}
 
-	for _, path := range paths {
+	for _, path := range foundPaths {
 		if g.Exclusion.FindString(path) != "" {
 			utils.LogWhenVerbose("[coverage] path '%s' skipped due to skipDir regex '%s'", path, g.Exclusion.String())
 			continue
 		}
 
-		paths = append(paths, path)
+		// always skip vendor dirs
+		if strings.Contains(path, "/vendor/") {
+			utils.LogWhenVerbose("[coverage] path '%s' skipped due to /vendor/", path)
+			continue
+		}
+
+		_, found := dedupeMap[path]
+		if !found {
+			paths = append(paths, path)
+			dedupeMap[path] = struct{}{}
+		}
 	}
 
 	g.do(paths)
@@ -79,34 +92,34 @@ type Generator struct {
 	// Tags is arguments passed to the go test runner
 	Tags string
 
-	// SequentialMode controls if the tests are run in parallel or not.  Original version was sequential
-	SequentialMode bool
+	// Concurrency controls how many tests can be run concurrently.  Default is `runtime.NumCPU()`
+	Concurrency int
 }
 
 func (g *Generator) do(paths []string) {
-	if g.SequentialMode {
-		for _, path := range paths {
-			generateCoverage(path, g.Exclusion, g.QuietMode, g.Tags)
-		}
-	} else {
-		resultCh := make(chan struct{})
-		defer close(resultCh)
+	jobsCh := make(chan string, len(paths))
+	wg := &sync.WaitGroup{}
 
-		// run in parallel
-		for _, path := range paths {
-			go func(inPath string, inExclusion *regexp.Regexp, inQuietMode bool, inTags string) {
-				generateCoverage(inPath, inExclusion, inQuietMode, inTags)
-				resultCh <- struct{}{}
-			}(path, g.Exclusion, g.QuietMode, g.Tags)
-		}
+	// create workers
+	for index := 1; index <= g.Concurrency; index++ {
+		wg.Add(1)
+		go doWorker(jobsCh, wg, g.Exclusion, g.QuietMode, g.Tags)
+	}
 
-		// wait until everything is done
-		done := 0
-		for range resultCh {
-			done++
-			if done >= len(paths) {
-				return
-			}
-		}
+	// send the paths
+	for _, path := range paths {
+		jobsCh <- path
+	}
+	close(jobsCh)
+
+	// wait until everything is done
+	wg.Wait()
+}
+
+func doWorker(jobsCh <-chan string, wg *sync.WaitGroup, exclusion *regexp.Regexp, quietMode bool, tags string) {
+	defer wg.Done()
+
+	for path := range jobsCh {
+		generateCoverage(path, exclusion, quietMode, tags)
 	}
 }
