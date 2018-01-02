@@ -34,6 +34,7 @@ func main() {
 	}()
 
 	verbose := false
+	sequential := true
 	quiet := true
 	coverage := false
 	singleDir := false
@@ -49,6 +50,7 @@ func main() {
 	var exclusions *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
+	flag.BoolVar(&sequential, "seq", false, "run tests in sequence (not parallel)")
 	flag.BoolVar(&quiet, "q", true, "quiet mode will suppress the stdOut messages from go test")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
@@ -69,6 +71,7 @@ func main() {
 	if verbose {
 		utils.LogWhenVerbose("Config:")
 		utils.LogWhenVerbose("Verbose: %v", verbose)
+		utils.LogWhenVerbose("Sequential: %v", sequential)
 		utils.LogWhenVerbose("Quiet: %v", quiet)
 		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
 		utils.LogWhenVerbose("Single Directory: %v", singleDir)
@@ -109,10 +112,11 @@ func main() {
 		} else {
 			generatorDo = &generator.RecursiveGenerator{
 				Generator: generator.Generator{
-					BasePath:  path,
-					Exclusion: exclusions,
-					QuietMode: quiet,
-					Tags:      tags,
+					BasePath:       path,
+					Exclusion:      exclusions,
+					QuietMode:      quiet,
+					Tags:           tags,
+					SequentialMode: sequential,
 				},
 			}
 		}

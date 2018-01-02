@@ -45,7 +45,7 @@ type RecursiveGenerator struct {
 
 // implements pathBuilder interface
 func (g *RecursiveGenerator) Do() {
-	output := []string{}
+	paths := []string{}
 
 	paths, err := utils.FindAllGoDirs(g.BasePath)
 	if err != nil {
@@ -58,10 +58,10 @@ func (g *RecursiveGenerator) Do() {
 			continue
 		}
 
-		output = append(output, path)
+		paths = append(paths, path)
 	}
 
-	g.do(output)
+	g.do(paths)
 }
 
 // Generator is the basis for other coverage generators
@@ -78,10 +78,35 @@ type Generator struct {
 
 	// Tags is arguments passed to the go test runner
 	Tags string
+
+	// SequentialMode controls if the tests are run in parallel or not.  Original version was sequential
+	SequentialMode bool
 }
 
 func (g *Generator) do(paths []string) {
-	for _, path := range paths {
-		generateCoverage(path, g.Exclusion, g.QuietMode, g.Tags)
+	if g.SequentialMode {
+		for _, path := range paths {
+			generateCoverage(path, g.Exclusion, g.QuietMode, g.Tags)
+		}
+	} else {
+		resultCh := make(chan struct{})
+		defer close(resultCh)
+
+		// run in parallel
+		for _, path := range paths {
+			go func(inPath string, inExclusion *regexp.Regexp, inQuietMode bool, inTags string) {
+				generateCoverage(inPath, inExclusion, inQuietMode, inTags)
+				resultCh <- struct{}{}
+			}(path, g.Exclusion, g.QuietMode, g.Tags)
+		}
+
+		// wait until everything is done
+		done := 0
+		for range resultCh {
+			done++
+			if done >= len(paths) {
+				return
+			}
+		}
 	}
 }
