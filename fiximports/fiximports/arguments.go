@@ -7,7 +7,7 @@ import (
 
 	"github.com/corsc/go-tools/commons"
 )
-
+//fake change (should not be landed)
 // FilesFromArgs translates supplied inputs into a list of filenames
 type FilesFromArgs interface {
 	FileNames() ([]string, error)
