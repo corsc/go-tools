@@ -101,8 +101,8 @@ func (g *Generator) do(paths []string) {
 	wg := &sync.WaitGroup{}
 
 	// create workers
+	wg.Add(g.Concurrency)
 	for index := 1; index <= g.Concurrency; index++ {
-		wg.Add(1)
 		go doWorker(jobsCh, wg, g.Exclusion, g.QuietMode, g.Tags)
 	}
 
