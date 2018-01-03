@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"runtime"
 
 	"github.com/corsc/go-tools/package-coverage/generator"
 	"github.com/corsc/go-tools/package-coverage/parser"
@@ -34,6 +35,7 @@ func main() {
 	}()
 
 	verbose := false
+	concurrency := 0
 	quiet := true
 	coverage := false
 	singleDir := false
@@ -49,6 +51,7 @@ func main() {
 	var exclusions *regexp.Regexp
 
 	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
+	flag.IntVar(&concurrency, "concurrency", runtime.NumCPU(), "concurrency used to run tests (default: runtime.NumCPU())")
 	flag.BoolVar(&quiet, "q", true, "quiet mode will suppress the stdOut messages from go test")
 	flag.BoolVar(&coverage, "c", false, "generate coverage")
 	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
@@ -69,6 +72,7 @@ func main() {
 	if verbose {
 		utils.LogWhenVerbose("Config:")
 		utils.LogWhenVerbose("Verbose: %v", verbose)
+		utils.LogWhenVerbose("Sequential: %v", concurrency)
 		utils.LogWhenVerbose("Quiet: %v", quiet)
 		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
 		utils.LogWhenVerbose("Single Directory: %v", singleDir)
@@ -109,10 +113,11 @@ func main() {
 		} else {
 			generatorDo = &generator.RecursiveGenerator{
 				Generator: generator.Generator{
-					BasePath:  path,
-					Exclusion: exclusions,
-					QuietMode: quiet,
-					Tags:      tags,
+					BasePath:    path,
+					Exclusion:   exclusions,
+					QuietMode:   quiet,
+					Tags:        tags,
+					Concurrency: concurrency,
 				},
 			}
 		}

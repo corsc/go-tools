@@ -73,7 +73,13 @@ func finder(basePath string, searchFor mode) ([]string, error) {
 		if err != nil {
 			return err
 		}
+
 		if foundPath != "" {
+			if strings.Contains(foundPath, "/vendor/") {
+				LogWhenVerbose("skipping '%s' due to /vendor/", path)
+				return nil
+			}
+
 			found = append(found, foundPath)
 		}
 		return nil

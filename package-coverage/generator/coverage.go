@@ -219,6 +219,11 @@ func filterCoverageContents(exclusionsMatcher *regexp.Regexp, in io.Reader, out 
 		line := coverageFileScanner.Text()
 
 		fileNameEndIndex := strings.LastIndex(line, ":")
+		if fileNameEndIndex == -1 {
+			utils.LogWhenVerbose("[coverage] error in line '%s'", line)
+			continue
+		}
+
 		fileName := line[:fileNameEndIndex]
 
 		if exclusionsMatcher.MatchString(fileName) {
