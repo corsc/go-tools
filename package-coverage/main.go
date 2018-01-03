@@ -72,7 +72,7 @@ func main() {
 	if verbose {
 		utils.LogWhenVerbose("Config:")
 		utils.LogWhenVerbose("Verbose: %v", verbose)
-		utils.LogWhenVerbose("Sequential: %v", concurrency)
+		utils.LogWhenVerbose("Concurrency: %v", concurrency)
 		utils.LogWhenVerbose("Quiet: %v", quiet)
 		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
 		utils.LogWhenVerbose("Single Directory: %v", singleDir)
