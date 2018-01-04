@@ -1,3 +1,5 @@
 /gonerator/test-data/mytype_gonerated.go
 /package-coverage/package-coverage
 .idea/*
+# MacOS rendering files
+.DS_store
