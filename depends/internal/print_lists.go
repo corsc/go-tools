@@ -22,45 +22,48 @@ import (
 	"fmt"
 )
 
+const (
+	keyDirect = "Direct"
+	keyTest   = "Test"
+)
+
 // PrintFullList of all packages and their dependents
 func PrintFullList(in *Summary) {
-	PrintChild(in)
-	PrintStdLib(in)
-	PrintExternal(in)
-	PrintVendored(in)
+	PrintDirect(in)
+	PrintTest(in)
 }
 
-func doPrintFullList(title string, itemsMap map[string]*SummaryItem) {
+func doPrintFullList(title string, itemsMap []string) {
 	header := "----------------------------\n%-30s\n"
 	fmt.Printf(header, title)
 
-	for pkgName, summary := range itemsMap {
-		fmt.Printf(header, pkgName)
+	for _, item := range itemsMap {
 		template := "    %-60s\n"
-
-		for dependent := range summary.Dependents {
-			fmt.Printf(template, dependent)
-		}
+		fmt.Printf(template, item)
 	}
 	println()
 }
 
-// PrintChild will output the child deps
-func PrintChild(in *Summary) {
-	doPrintFullList(keyChild, in.child)
+// PrintDirect will output the direct deps
+func PrintDirect(in *Summary) {
+	doPrintFullList(keyDirect, in.direct)
 }
 
-// PrintStdLib will output the std lib deps
-func PrintStdLib(in *Summary) {
-	doPrintFullList(keyStdLib, in.stdLib)
+// PrintTest will output the std lib deps
+func PrintTest(in *Summary) {
+	doPrintFullList(keyTest, in.test)
 }
 
-// PrintExternal will output the external deps
-func PrintExternal(in *Summary) {
-	doPrintFullList(keyExternal, in.external)
+// PrintFullList of all packages and their dependents
+func PrintCSVList(in *Summary) {
+	doPrintCSVList(keyDirect, in.direct)
+	doPrintCSVList(keyTest, in.test)
 }
 
-// PrintVendored will output the vendored deps
-func PrintVendored(in *Summary) {
-	doPrintFullList(keyVendored, in.vendored)
+func doPrintCSVList(title string, items []string) {
+	for _, item := range items {
+		template := "%s,%s\n"
+		fmt.Printf(template, title, item)
+	}
+	println()
 }

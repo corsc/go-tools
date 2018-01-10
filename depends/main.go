@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/corsc/go-tools/depends/internal"
 )
@@ -30,54 +31,47 @@ func main() {
 	}
 
 	directory := flag.Arg(0)
+	focusPackage := flag.Arg(1)
 	masterList := internal.GetDependantsList(directory)
 
-	summary := internal.BuildSummary(masterList)
+	summary := internal.BuildSummary(focusPackage, masterList)
 
 	printOutput(cfg, summary)
 }
 
 func printOutput(cfg *config, in *internal.Summary) {
-	if cfg.list {
-		internal.PrintFullList(in)
+	if cfg.listCSV {
+		internal.PrintCSVList(in)
 		return
 	}
 
-	if cfg.summaryCSV {
-		internal.PrintSummaryCSV(in)
+	if cfg.listDirect {
+		internal.PrintDirect(in)
+		return
+	}
+	if cfg.listTest {
+		internal.PrintTest(in)
 		return
 	}
 
-	internal.PrintSummary(in)
-
-	if cfg.listChild {
-		internal.PrintChild(in)
-	}
-	if cfg.listStdLib {
-		internal.PrintStdLib(in)
-	}
-	if cfg.listExternal {
-		internal.PrintExternal(in)
-	}
-	if cfg.listVendored {
-		internal.PrintVendored(in)
-	}
+	internal.PrintFullList(in)
 }
 
 type config struct {
-	list         bool
-	listChild    bool
-	listStdLib   bool
-	listVendored bool
-	listExternal bool
-	summaryCSV   bool
+	listDirect bool
+	listTest   bool
+	listCSV    bool
 }
 
 func setUsage(cfg *config) {
-	flag.BoolVar(&cfg.list, "list", false, "list everything ")
-	flag.BoolVar(&cfg.listChild, "child", false, "list child dependencies")
-	flag.BoolVar(&cfg.listStdLib, "std", false, "list standard library dependencies")
-	flag.BoolVar(&cfg.listVendored, "vendored", false, "list vendored dependencies")
-	flag.BoolVar(&cfg.listExternal, "external", false, "list external dependencies")
-	flag.BoolVar(&cfg.summaryCSV, "scsv", false, "print summary as CSV (overrides other options)")
+	flag.BoolVar(&cfg.listDirect, "direct", false, "list only direct dependencies")
+	flag.BoolVar(&cfg.listTest, "test", false, "list only test dependencies")
+	flag.BoolVar(&cfg.listCSV, "csv", false, "print list as CSV (overrides other options)")
+
+	flag.Usage = func() {
+		fmt.Print("Usage of depends:\n")
+		fmt.Printf("\tdepends [flags] [base directory] [pkg]\n")
+		fmt.Printf("Flags:\n")
+		flag.PrintDefaults()
+	}
 }

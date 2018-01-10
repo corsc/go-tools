@@ -16,6 +16,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/corsc/go-tools/tangled/internal"
 )
@@ -78,4 +79,11 @@ func setUsage(cfg *config) {
 	flag.BoolVar(&cfg.listVendored, "vendored", false, "list vendored dependencies")
 	flag.BoolVar(&cfg.listExternal, "external", false, "list external dependencies")
 	flag.BoolVar(&cfg.summaryCSV, "scsv", false, "print summary as CSV (overrides other options)")
+
+	flag.Usage = func() {
+		fmt.Print("Usage of tangled:\n")
+		fmt.Printf("\ttangled [flags] [base directory] [pkg]\n")
+		fmt.Printf("Flags:\n")
+		flag.PrintDefaults()
+	}
 }

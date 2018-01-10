@@ -23,8 +23,8 @@ import (
 )
 
 // GetDependantsList returns the list packages that depend on a given package (directory)
-func GetDependantsList(directory string) *MasterList {
-	bytes := goList(directory)
+func GetDependantsList(searchDir string) *MasterList {
+	bytes := goList(searchDir)
 
 	out := &MasterList{}
 	err := json.Unmarshal(bytes, out)
@@ -35,10 +35,10 @@ func GetDependantsList(directory string) *MasterList {
 	return out
 }
 
-func goList(directory string) []byte {
+func goList(searchDir string) []byte {
 	cmd := exec.Command("go", "list", "--json", "./...")
 
-	cmd.Dir = directory
+	cmd.Dir = searchDir
 
 	output := &bytes.Buffer{}
 	_, _ = output.WriteString(`{"pkgs":[`)
@@ -71,7 +71,7 @@ type MasterList struct {
 
 // Deps is the JSON format returned by `go list --json`
 type Deps struct {
-	BasePath        string   `json:"ImportPath"`
-	DirectImports   []string `json:"Imports"`
-	IndirectImports []string `json:"Deps"`
+	BasePath      string   `json:"ImportPath"`
+	DirectImports []string `json:"Imports"`
+	TestImports   []string `json:"TestImports"`
 }
