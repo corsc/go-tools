@@ -15,6 +15,7 @@
 package parser
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,24 @@ func TestCalculateCoverage(t *testing.T) {
 	result := getCoverageByPackage(sampleCoverageFileContents)
 	converted := map[string]*coverage(result)
 	assert.Equal(t, expected, converted)
+}
+
+func TestAddLinePrint(t *testing.T) {
+	buffer := &bytes.Buffer{}
+	pkgFormatted := "test"
+	cover := &coverage{
+		selfStatements:  0,
+		selfCovered:     0,
+		childStatements: 0,
+		childCovered:    0,
+	}
+	minCoverage := float64(0)
+
+	result := addLinePrint(buffer, pkgFormatted, cover, minCoverage)
+	assert.True(t, result)
+
+	expected := "|   0.00 |      0 |   0.00 |      0 | test                                                                             |\n"
+	assert.Equal(t, expected, buffer.String())
 }
 
 var sampleCoverageFileContents = `

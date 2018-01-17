@@ -77,14 +77,20 @@ func getSummaryValues(cover *coverage) (float64, float64) {
 	stmts := float64(cover.selfStatements + cover.childStatements)
 	stmtsCovered := float64(cover.selfCovered + cover.childCovered)
 
-	covered := (stmtsCovered / stmts) * 100
-
-	return covered, stmts
+	return getValues(stmts, stmtsCovered)
 }
 
 func getSelfValues(cover *coverage) (float64, float64) {
 	stmts := float64(cover.selfStatements)
 	stmtsCovered := float64(cover.selfCovered)
+
+	return getValues(stmts, stmtsCovered)
+}
+
+func getValues(stmts float64, stmtsCovered float64) (float64, float64) {
+	if stmtsCovered <= 0.0 {
+		return 0, 0
+	}
 
 	covered := (stmtsCovered / stmts) * 100
 
