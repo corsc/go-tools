@@ -88,8 +88,8 @@ func getSelfValues(cover *coverage) (float64, float64) {
 }
 
 func getValues(stmts float64, stmtsCovered float64) (float64, float64) {
-	if stmtsCovered <= 0.0 {
-		return 0, 0
+	if stmts <= 0.0 {
+		return 100, 0
 	}
 
 	covered := (stmtsCovered / stmts) * 100
