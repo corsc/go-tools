@@ -27,6 +27,7 @@ func TestFindAllGoDirs(t *testing.T) {
 	path := "../"
 	expected := []string{
 		dir + "package-coverage/",
+		dir + "package-coverage/config/",
 		dir + "package-coverage/generator/",
 		dir + "package-coverage/parser/",
 		dir + "package-coverage/test-data/pathmatcher/",

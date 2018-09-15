@@ -15,13 +15,12 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"os"
 	"regexp"
-	"runtime"
 
+	"github.com/corsc/go-tools/package-coverage/config"
 	"github.com/corsc/go-tools/package-coverage/generator"
 	"github.com/corsc/go-tools/package-coverage/parser"
 	"github.com/corsc/go-tools/package-coverage/utils"
@@ -34,96 +33,19 @@ func main() {
 		}
 	}()
 
-	verbose := false
-	concurrency := 0
-	quiet := true
-	coverage := false
-	singleDir := false
-	doClean := false
-	doPrint := false
-	ignorePaths := ""
-	webHook := ""
-	channelOverride := ""
-	prefix := ""
-	depth := 0
-	minCoverage := 0
-	tags := ""
-	var exclusions *regexp.Regexp
-
-	flag.BoolVar(&verbose, "v", false, "verbose mode is useful for debugging this tool")
-	flag.IntVar(&concurrency, "concurrency", runtime.NumCPU(), "concurrency used to run tests (default: runtime.NumCPU())")
-	flag.BoolVar(&quiet, "q", true, "quiet mode will suppress the stdOut messages from go test")
-	flag.BoolVar(&coverage, "c", false, "generate coverage")
-	flag.BoolVar(&singleDir, "s", false, "only generate for the supplied directory (no recursion / will ignore -i)")
-	flag.BoolVar(&doClean, "d", false, "clean")
-	flag.BoolVar(&doPrint, "p", false, "print coverage to stdout")
-	flag.StringVar(&ignorePaths, "i", `./\.git.*|./_.*`, "ignore file paths matching the specified regex (match directories by surrounding the directory name with slashes; match files by prefixing with a slash)")
-	flag.StringVar(&webHook, "webhook", "", "Slack webhook URL (missing means don't send)")
-	flag.StringVar(&channelOverride, "channel", "", "Slack channel (missing means use the default channel for this webhook)")
-	flag.StringVar(&prefix, "prefix", "", "Prefix to be removed from the output")
-	flag.IntVar(&depth, "depth", 0, "How many levels of coverage to output (default is 0 = all)")
-	flag.IntVar(&minCoverage, "m", 0, "minimum coverage")
-	flag.StringVar(&tags, "tags", ``, "go build tags to be added in go test calls")
-	flag.Parse()
-
+	// get config and environment
+	cfg := config.GetConfig()
 	startDir := utils.GetCurrentDir()
 	path := getPath()
 
-	if verbose {
-		utils.LogWhenVerbose("Config:")
-		utils.LogWhenVerbose("Verbose: %v", verbose)
-		utils.LogWhenVerbose("Concurrency: %v", concurrency)
-		utils.LogWhenVerbose("Quiet: %v", quiet)
-		utils.LogWhenVerbose("Generate Coverage: %v", coverage)
-		utils.LogWhenVerbose("Single Directory: %v", singleDir)
-		utils.LogWhenVerbose("Clean: %v", doClean)
-		utils.LogWhenVerbose("Print Coverage: %v", doPrint)
-		utils.LogWhenVerbose("Ignore Regex: %v", ignorePaths)
-		utils.LogWhenVerbose("Slack WebHook: %v", webHook)
-		utils.LogWhenVerbose("Prefix: %v", prefix)
-		utils.LogWhenVerbose("Depth: %v", depth)
-		utils.LogWhenVerbose("Min Coverage: %v", minCoverage)
-		utils.LogWhenVerbose("Start Dir: %v", startDir)
-		utils.LogWhenVerbose("Path: %v", path)
-	} else {
-		utils.VerboseOff()
+	// build exclusions regex
+	var exclusions *regexp.Regexp
+	if cfg.IgnorePaths != "" {
+		exclusions = regexp.MustCompile(cfg.IgnorePaths)
 	}
 
-	if ignorePaths != "" {
-		exclusions = regexp.MustCompile(ignorePaths)
-	}
-
-	if depth > 0 && len(prefix) == 0 {
-		println("You must specify a prefix when using -depth")
-		os.Exit(-1)
-	}
-
-	if coverage {
-		var generatorDo generator.GeneratorDo
-
-		if singleDir {
-			generatorDo = &generator.SingleDirGenerator{
-				Generator: generator.Generator{
-					BasePath:  path,
-					Exclusion: exclusions,
-					QuietMode: quiet,
-					Tags:      tags,
-				},
-			}
-		} else {
-			generatorDo = &generator.RecursiveGenerator{
-				Generator: generator.Generator{
-					BasePath:    path,
-					Exclusion:   exclusions,
-					QuietMode:   quiet,
-					Tags:        tags,
-					Concurrency: concurrency,
-				},
-			}
-		}
-
-		generatorDo.Do()
-	}
+	// calculate coverage
+	generator.Calculate(cfg, path, exclusions)
 
 	// switch back to start dir
 	err := os.Chdir(startDir)
@@ -131,36 +53,16 @@ func main() {
 		panic(err)
 	}
 
-	coverageOk := true
-	if doPrint {
-		buffer := bytes.Buffer{}
+	// output coverage to StdOut
+	coverageOk := parser.DoPrint(cfg, path, exclusions)
 
-		if singleDir {
-			coverageOk = parser.PrintCoverageSingle(&buffer, path, minCoverage, prefix, depth)
-		} else {
-			coverageOk = parser.PrintCoverage(&buffer, path, exclusions, minCoverage, prefix, depth)
-		}
+	// output to Slack
+	parser.DoSlack(cfg, path, exclusions)
 
-		fmt.Print(buffer.String())
-	}
+	// clean up
+	generator.DoClean(cfg, path, exclusions)
 
-	if webHook != "" {
-		if singleDir {
-			parser.SlackCoverageSingle(path, webHook, channelOverride, prefix, depth)
-		} else {
-			parser.SlackCoverage(path, exclusions, webHook, channelOverride, prefix, depth)
-		}
-	}
-
-	if doClean {
-		cleaner := generator.NewCleaner()
-		if singleDir {
-			cleaner.Single(path)
-		} else {
-			cleaner.Recursive(path, exclusions)
-		}
-	}
-
+	// signal success or not
 	if !coverageOk {
 		os.Exit(-1)
 	}
