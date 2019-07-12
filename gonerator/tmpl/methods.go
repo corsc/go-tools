@@ -76,9 +76,14 @@ func GetMethods(file *ast.File, typeName string) []Method {
 }
 
 func extractParamsAndResults(fnDesl *ast.FuncType) ([]MethodField, []MethodField) {
-	params := extractFieldsFromAst(fnDesl.Params.List)
-	results := extractFieldsFromAst(fnDesl.Results.List)
-
+	var params []MethodField
+	var results []MethodField
+	if fnDesl.Params.List != nil {
+		params = extractFieldsFromAst(fnDesl.Params.List)
+	}
+	if fnDesl.Results.List != nil {
+		results = extractFieldsFromAst(fnDesl.Results.List)
+	}
 	return params, results
 }
 
