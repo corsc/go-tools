@@ -39,7 +39,7 @@ func (f Method) String() string {
 
 // GetMethods will extract a slice of funcs from the supplied AST
 func GetMethods(file *ast.File, typeName string) []Method {
-	out := []Method{}
+	var out []Method
 
 	for _, decl := range file.Decls {
 		switch decl := decl.(type) {
@@ -75,15 +75,20 @@ func GetMethods(file *ast.File, typeName string) []Method {
 	return out
 }
 
-func extractParamsAndResults(fnDesl *ast.FuncType) ([]MethodField, []MethodField) {
-	params := extractFieldsFromAst(fnDesl.Params.List)
-	results := extractFieldsFromAst(fnDesl.Results.List)
-
+func extractParamsAndResults(funcType *ast.FuncType) ([]MethodField, []MethodField) {
+	var params []MethodField
+	var results []MethodField
+	if funcType.Params != nil {
+		params = extractFieldsFromAst(funcType.Params.List)
+	}
+	if funcType.Results != nil  {
+		results = extractFieldsFromAst(funcType.Results.List)
+	}
 	return params, results
 }
 
 func extractFieldsFromAst(items []*ast.Field) []MethodField {
-	output := []MethodField{}
+	var output []MethodField
 
 	for _, item := range items {
 		typeStr := getTypeString(item.Type)
