@@ -164,15 +164,16 @@ func execCoverage(dir string, quiet bool, tags string) error {
 	}
 
 	err := cmd.Run()
+
+	payload, _ := cmd.CombinedOutput()
+	utils.LogWhenVerbose("[coverage] test output:\n%s", payload)
+
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while running go test. err: %s", err)
-		utils.LogWhenVerbose("[coverage] test output.\n%s", cmd.Stdout)
-		utils.LogWhenVerbose("[coverage] test output error\n%s", cmd.Stderr)
 		return err
 	}
 
 	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
-	utils.LogWhenVerbose("[coverage] test output.\n%s", cmd.Stdout)
 	return nil
 }
 
