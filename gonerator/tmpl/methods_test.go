@@ -62,13 +62,13 @@ func TestGetMethods(t *testing.T) {
 		// Reference: https://github.com/corsc/go-tools/pull/26
 		// Thanks @ybdx
 		{
-			desc:     "happy path - interface with no params or results",
-			inSrc:    srcInterfaceWithNoParamsAndNoResults,
-			inType:   "myType",
+			desc:   "happy path - interface with no params or results",
+			inSrc:  srcInterfaceWithNoParamsAndNoResults,
+			inType: "myType",
 			expected: []Method{
 				{
-					Name: "MyTest",
-					Params: nil,
+					Name:    "MyTest",
+					Params:  nil,
 					Results: nil,
 				},
 			},

@@ -81,7 +81,7 @@ func extractParamsAndResults(funcType *ast.FuncType) ([]MethodField, []MethodFie
 	if funcType.Params != nil {
 		params = extractFieldsFromAst(funcType.Params.List)
 	}
-	if funcType.Results != nil  {
+	if funcType.Results != nil {
 		results = extractFieldsFromAst(funcType.Results.List)
 	}
 	return params, results

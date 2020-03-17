@@ -166,11 +166,12 @@ func execCoverage(dir string, quiet bool, tags string) error {
 	err := cmd.Run()
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while running go test. err: %s", err)
+		utils.LogWhenVerbose("[coverage] error while running go test. err: %s", cmd.Stderr)
 		return err
 	}
 
 	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
-
+	utils.LogWhenVerbose("[coverage] test output %s", cmd.Stdout)
 	return nil
 }
 
@@ -187,7 +188,7 @@ func filterCoverage(coverageFilename string, exclusionsMatcher *regexp.Regexp) e
 
 	coverageFile, err := os.OpenFile(coverageFilename, os.O_RDWR, 0)
 	if err != nil {
-		utils.LogWhenVerbose("[coverage] error while openning file %s, err: %s", coverageFilename, err)
+		utils.LogWhenVerbose("[coverage] error while opening file %s, err: %s", coverageFilename, err)
 		return err
 	}
 
