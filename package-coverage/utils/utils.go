@@ -23,6 +23,11 @@ var LogWhenVerbose = func(msg string, args ...interface{}) {
 	log.Printf(msg, args...)
 }
 
+// LogAlways will write to stdout always
+func LogAlways(msg string, args ...interface{}) {
+	log.Printf(msg, args...)
+}
+
 // VerboseOff will stop all verbose logs
 func VerboseOff() {
 	LogWhenVerbose = func(msg string, args ...interface{}) {}

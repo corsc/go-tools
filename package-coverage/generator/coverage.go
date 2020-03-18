@@ -169,7 +169,11 @@ func execCoverage(dir string, quiet bool, tags string) error {
 	utils.LogWhenVerbose("[coverage] test output %s:\n%s", dir, payload)
 
 	if err != nil {
-		utils.LogWhenVerbose("[coverage] error while running go test %s. err: %s", dir, err)
+		if err.Error() == "exit status 1" {
+			utils.LogAlways("WARNING: tests for %s are broken. err: %s", dir, err)
+		} else {
+			utils.LogAlways("[coverage] error while running go test %s. err: %s", dir, err)
+		}
 		return err
 	}
 
