@@ -40,6 +40,7 @@ func Calculate(cfg *config.Config, path string, exclusions *regexp.Regexp) {
 				BasePath:  path,
 				Exclusion: exclusions,
 				QuietMode: cfg.Quiet,
+				Race:      cfg.Race,
 				Tags:      cfg.Tags,
 			},
 		}
@@ -49,6 +50,7 @@ func Calculate(cfg *config.Config, path string, exclusions *regexp.Regexp) {
 				BasePath:    path,
 				Exclusion:   exclusions,
 				QuietMode:   cfg.Quiet,
+				Race:        cfg.Race,
 				Tags:        cfg.Tags,
 				Concurrency: cfg.Concurrency,
 			},

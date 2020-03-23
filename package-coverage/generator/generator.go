@@ -89,6 +89,9 @@ type Generator struct {
 	// QuietMode controls how verbose the logging is.  Useful for debugging
 	QuietMode bool
 
+	// Race is used to enable --race flag
+	Race bool
+
 	// Tags is arguments passed to the go test runner
 	Tags string
 
@@ -103,7 +106,7 @@ func (g *Generator) do(paths []string) {
 	// create workers
 	wg.Add(g.Concurrency)
 	for index := 1; index <= g.Concurrency; index++ {
-		go doWorker(jobsCh, wg, g.Exclusion, g.QuietMode, g.Tags)
+		go doWorker(jobsCh, wg, g.Exclusion, g.QuietMode, g.Race, g.Tags)
 	}
 
 	// send the paths
@@ -116,10 +119,10 @@ func (g *Generator) do(paths []string) {
 	wg.Wait()
 }
 
-func doWorker(jobsCh <-chan string, wg *sync.WaitGroup, exclusion *regexp.Regexp, quietMode bool, tags string) {
+func doWorker(jobsCh <-chan string, wg *sync.WaitGroup, exclusion *regexp.Regexp, quietMode, race bool, tags string) {
 	defer wg.Done()
 
 	for path := range jobsCh {
-		generateCoverage(path, exclusion, quietMode, tags)
+		generateCoverage(path, exclusion, quietMode, race, tags)
 	}
 }

@@ -75,6 +75,9 @@ type Config struct {
 
 	// Tags is the go build tags to be added in go test calls
 	Tags string
+
+	// Race is used to enable --race flag
+	Race bool
 }
 
 // GetConfig will extra config from flags and return
@@ -96,6 +99,7 @@ func GetConfig() *Config {
 	flag.IntVar(&(cfg.Depth), "depth", 0, "How many levels of coverage to output (default is 0 = all)")
 	flag.IntVar(&(cfg.MinCoverage), "m", 0, "minimum coverage")
 	flag.StringVar(&(cfg.Tags), "tags", ``, "go build tags to be added in go test calls")
+	flag.BoolVar(&(cfg.Race), "r", false, "enable race detection during testing")
 	flag.BoolVar(&(cfg.DoAll), "a", true, "short form/convenience method for -c -p -d (calculate, output and clean up)")
 	flag.Parse()
 
