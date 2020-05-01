@@ -68,6 +68,7 @@ func getFuncMap() template.FuncMap {
 		"paramsWithType": paramsWithType,
 		"paramsNoType":   paramsNoType,
 		"hasField":       hasField,
+		"testData":       testData,
 	}
 }
 
@@ -155,3 +156,48 @@ func hasField(fields []Field, fieldName string) bool {
 
 	return false
 }
+
+// generate predictable test data based on the type and index
+func testData(index int, destType string) string {
+	switch destType {
+	case "int", "int8, int16", "int32", "int64":
+		return intTestData[index%10]
+
+	case "float32", "float64":
+		return floatTestData[index%10]
+
+	case "string":
+		return stringTestData[index%10]
+
+	case "[]byte]":
+		return byteTestData[index%10]
+
+	case "time.Time":
+		return "time.Time{}"
+
+	default:
+		return "nil"
+	}
+}
+
+var (
+	intTestData = []string{
+		"111", "222", "333", "444", "555",
+		"666", "777", "888", "999", "000",
+	}
+
+	floatTestData = []string{
+		"1.11", "2.22", "3.33", "4.44", "5.55",
+		"6.66", "7.77", "8.88", "9.99", "0.00",
+	}
+
+	stringTestData = []string{
+		`"AAA"`, `"BBB"`, `"CCC"`, `"DDD"`, `"EEE"`,
+		`"FFF"`, `"GGG"`, `"HHH"`, `"III"`, `"JJJ"`,
+	}
+
+	byteTestData = []string{
+		`[]byte("AAA")`, `[]byte("BBB")`, `[]byte("CCC")`, `[]byte("DDD")`, `[]byte("EEE")`,
+		`[]byte("FFF")`, `[]byte("GGG")`, `[]byte("HHH")`, `[]byte("III")`, `[]byte("JJJ")`,
+	}
+)
