@@ -99,48 +99,6 @@ type myType struct {
 			expected:  `row.Scan(&in.Name, &in.Balance)`,
 			expectErr: false,
 		},
-		{
-			desc:       "typedFieldsList",
-			inTemplate: `func foo({{ typedFieldsList .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" }})`,
-			inSrc: `package test
-
-type myType struct {
-	ID      int64
-	Name    string
-	Balance float64
-}
-`,
-			expected:  `func foo(iD int64, name string, balance float64)`,
-			expectErr: false,
-		},
-		{
-			desc:       "typedFieldsListWithTag",
-			inTemplate: `func foo({{ typedFieldsListWithTag .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" "sql-col" }})`,
-			inSrc: `package test
-
-type myType struct {
-	ID      int64	` + "`" + `sql-col:"id"` + "`" + `
-	Name    string
-	Balance float64
-}
-`,
-			expected:  `func foo(iD int64)`,
-			expectErr: false,
-		},
-		{
-			desc:       "typedFieldsListWithTagValue",
-			inTemplate: `func foo({{ typedFieldsListWithTagValue .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" "sql-key" "false" }})`,
-			inSrc: `package test
-
-type myType struct {
-	ID      int64	` + "`" + `sql-key:"true"` + "`" + `
-	Name    string  ` + "`" + `sql-key:"false"` + "`" + `
-	Balance float64 ` + "`" + `sql-key:"false"` + "`" + `
-}
-`,
-			expected:  `func foo(name string, balance float64)`,
-			expectErr: false,
-		},
 	}
 
 	for _, s := range scenarios {
