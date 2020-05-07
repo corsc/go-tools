@@ -38,7 +38,7 @@ func (f Field) String() string {
 
 // GetFields will extract a slice of fields from the supplied AST
 func GetFields(file *ast.File, desiredStruct string) []Field {
-	out := []Field{}
+	var out []Field
 
 	// Check all declarations
 	for _, decl := range file.Decls {
@@ -83,7 +83,7 @@ func toStruct(spec ast.Spec) (*ast.StructType, string, bool) {
 }
 
 func getStructFields(file *ast.File, sType *ast.StructType) []Field {
-	out := []Field{}
+	var out []Field
 
 	for _, field := range sType.Fields.List {
 		var name string

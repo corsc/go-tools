@@ -20,61 +20,150 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestUATSimple(t *testing.T) {
-	tmpl := `row.Scan({{$len := len .Fields }}{{range $index, $value := .Fields}}&in.{{$value.Name}}{{isNotLast $len $index ", "}}{{end}})`
-
-	src := `package test
+func TestUAT(t *testing.T) {
+	scenarios := []struct {
+		desc       string
+		inTemplate string
+		inSrc      string
+		expected   string
+		expectErr  bool
+	}{
+		{
+			desc:       "fields list using range",
+			inTemplate: `row.Scan({{$len := len .Fields }}{{range $index, $value := .Fields}}&in.{{$value.Name}}{{isNotLast $len $index ", "}}{{end}})`,
+			inSrc: `package test
 
 type myType struct {
 	ID      int64
 	Name    string
 	Balance float64
 }
-`
-	typeName := "myType"
-	vars := TemplateData{
-		TypeName: typeName,
-		Fields:   GetFields(getASTFromSrc(src), typeName),
-		Methods:  GetMethods(getASTFromSrc(src), typeName),
-	}
-
-	masterTmpl, err := getTemplate().Parse(tmpl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	buffer := &bytes.Buffer{}
-	_ = masterTmpl.Execute(buffer, vars)
-
-	assert.Equal(t, "row.Scan(&in.ID, &in.Name, &in.Balance)", buffer.String())
-}
-
-func TestUATInterface(t *testing.T) {
-	tmpl := `{{ $typeName := .TypeName }}{{ $len := len .Methods }}{{ range $index, $value := .Methods }}func (impl {{ $typeName }}Impl) {{ $value.Name }}({{ $plen := len $value.Params }}{{ range $pindex, $pvalue := $value.Params }}{{ $pplen := len $pvalue.Names }}{{ range $ppindex, $ppname := $pvalue.Names }}{{ $ppname }}{{ isNotLast $pplen $ppindex ", " }}{{ end }} {{ $pvalue.Type }}{{ isNotLast $plen $pindex ", " }}{{ end }}) {{ $rlen := len .Results }}({{ range $rindex, $rvalue := .Results }}{{ $rvalue.Type }}{{ isNotLast $rlen $rindex ", " }}{{ end }}) {}{{ end }}`
-
-	src := `package test
+`,
+			expected:  `row.Scan(&in.ID, &in.Name, &in.Balance)`,
+			expectErr: false,
+		},
+		{
+			desc:       "fields list using range - extended",
+			inTemplate: `{{ $typeName := .TypeName }}{{ $len := len .Methods }}{{ range $index, $value := .Methods }}func (impl {{ $typeName }}Impl) {{ $value.Name }}({{ $plen := len $value.Params }}{{ range $pindex, $pvalue := $value.Params }}{{ $pplen := len $pvalue.Names }}{{ range $ppindex, $ppname := $pvalue.Names }}{{ $ppname }}{{ isNotLast $pplen $ppindex ", " }}{{ end }} {{ $pvalue.Type }}{{ isNotLast $plen $pindex ", " }}{{ end }}) {{ $rlen := len .Results }}({{ range $rindex, $rvalue := .Results }}{{ $rvalue.Type }}{{ isNotLast $rlen $rindex ", " }}{{ end }}) {}{{ end }}`,
+			inSrc: `package test
 
 type myType interface {
 	LoadByID(ctx context.Context, id int64) tType
 }
-`
-	typeName := "myType"
-	vars := TemplateData{
-		TypeName: typeName,
-		Fields:   GetFields(getASTFromSrc(src), typeName),
-		Methods:  GetMethods(getASTFromSrc(src), typeName),
+`,
+			expected:  `func (impl myTypeImpl) LoadByID(ctx context.Context, id int64) (tType) {}`,
+			expectErr: false,
+		},
+		{
+			desc:       "fieldsList",
+			inTemplate: `row.Scan({{ fieldsList .Fields "&in.{{$field.Name}}" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64
+	Name    string
+	Balance float64
+}
+`,
+			expected:  `row.Scan(&in.ID, &in.Name, &in.Balance)`,
+			expectErr: false,
+		},
+		{
+			desc:       "fieldsListWithTag",
+			inTemplate: `row.Scan({{ fieldsListWithTag .Fields "&in.{{$field.Name}}" "sql-col" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64	` + "`" + `sql-col:"id"` + "`" + `
+	Name    string
+	Balance float64
+}
+`,
+			expected:  `row.Scan(&in.ID)`,
+			expectErr: false,
+		},
+		{
+			desc:       "fieldsListWithTagValue",
+			inTemplate: `row.Scan({{ fieldsListWithTagValue .Fields "&in.{{$field.Name}}" "sql-key" "false" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64	` + "`" + `sql-key:"true"` + "`" + `
+	Name    string  ` + "`" + `sql-key:"false"` + "`" + `
+	Balance float64 ` + "`" + `sql-key:"false"` + "`" + `
+}
+`,
+			expected:  `row.Scan(&in.Name, &in.Balance)`,
+			expectErr: false,
+		},
+		{
+			desc:       "typedFieldsList",
+			inTemplate: `func foo({{ typedFieldsList .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64
+	Name    string
+	Balance float64
+}
+`,
+			expected:  `func foo(iD int64, name string, balance float64)`,
+			expectErr: false,
+		},
+		{
+			desc:       "typedFieldsListWithTag",
+			inTemplate: `func foo({{ typedFieldsListWithTag .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" "sql-col" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64	` + "`" + `sql-col:"id"` + "`" + `
+	Name    string
+	Balance float64
+}
+`,
+			expected:  `func foo(iD int64)`,
+			expectErr: false,
+		},
+		{
+			desc:       "typedFieldsListWithTagValue",
+			inTemplate: `func foo({{ typedFieldsListWithTagValue .Fields "{{- firstLower $field.Name }} {{ $field.Type }}" "sql-key" "false" }})`,
+			inSrc: `package test
+
+type myType struct {
+	ID      int64	` + "`" + `sql-key:"true"` + "`" + `
+	Name    string  ` + "`" + `sql-key:"false"` + "`" + `
+	Balance float64 ` + "`" + `sql-key:"false"` + "`" + `
+}
+`,
+			expected:  `func foo(name string, balance float64)`,
+			expectErr: false,
+		},
 	}
 
-	masterTmpl, err := getTemplate().Parse(tmpl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	buffer := &bytes.Buffer{}
-	execErr := masterTmpl.Execute(buffer, vars)
-	if execErr != nil {
-		assert.Fail(t, execErr.Error())
-	}
+	for _, s := range scenarios {
+		scenario := s
+		t.Run(scenario.desc, func(t *testing.T) {
+			typeName := "myType"
+			vars := TemplateData{
+				TypeName: typeName,
+				Fields:   GetFields(getASTFromSrc(scenario.inSrc), typeName),
+				Methods:  GetMethods(getASTFromSrc(scenario.inSrc), typeName),
+			}
 
-	assert.Equal(t, "func (impl myTypeImpl) LoadByID(ctx context.Context, id int64) (tType) {}", buffer.String())
+			parsedTemplate, err := getTemplate().Parse(scenario.inTemplate)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			buffer := &bytes.Buffer{}
+			resultErr := parsedTemplate.Execute(buffer, vars)
+			result := buffer.String()
+
+			require.Equal(t, scenario.expectErr, resultErr != nil, "expected error", resultErr)
+			assert.Equal(t, scenario.expected, result, "expected result")
+		})
+	}
 }

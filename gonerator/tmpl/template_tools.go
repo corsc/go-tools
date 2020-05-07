@@ -15,6 +15,7 @@
 package tmpl
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"strings"
@@ -55,20 +56,26 @@ func getTemplate() *template.Template {
 
 func getFuncMap() template.FuncMap {
 	return template.FuncMap{
-		"isNotFirst":     isNotFirst,
-		"isNotLast":      isNotLast,
-		"firstLower":     firstLower,
-		"firstUpper":     strings.Title,
-		"toUpper":        strings.ToUpper,
-		"toLower":        strings.ToLower,
-		"isSlice":        isSlice,
-		"sliceType":      sliceType,
-		"isMap":          isMap,
-		"add":            add,
-		"paramsWithType": paramsWithType,
-		"paramsNoType":   paramsNoType,
-		"hasField":       hasField,
-		"testData":       testData,
+		"isNotFirst":                  isNotFirst,
+		"isNotLast":                   isNotLast,
+		"firstLower":                  firstLower,
+		"firstUpper":                  strings.Title,
+		"toUpper":                     strings.ToUpper,
+		"toLower":                     strings.ToLower,
+		"isSlice":                     isSlice,
+		"sliceType":                   sliceType,
+		"isMap":                       isMap,
+		"add":                         add,
+		"paramsWithType":              paramsWithType,
+		"paramsNoType":                paramsNoType,
+		"hasField":                    hasField,
+		"testData":                    testData,
+		"fieldsList":                  fieldsList,
+		"fieldsListWithTag":           fieldsListWithTag,
+		"fieldsListWithTagValue":      fieldsListWithTagValue,
+		"typedFieldsList":             typedFieldsList,
+		"typedFieldsListWithTag":      typedFieldsListWithTag,
+		"typedFieldsListWithTagValue": typedFieldsListWithTagValue,
 	}
 }
 
@@ -155,6 +162,115 @@ func hasField(fields []Field, fieldName string) bool {
 	}
 
 	return false
+}
+
+func processFieldsList(rawTemplate string, fields []Field) (string, error) {
+	compiledTemplate, err := getTemplate().Parse(rawTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	vars := TemplateData{
+		Fields: fields,
+	}
+
+	buffer := &bytes.Buffer{}
+	err = compiledTemplate.Execute(buffer, vars)
+	if err != nil {
+		return "", err
+	}
+
+	return buffer.String(), nil
+}
+
+func fieldsList(fields []Field, fragment string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	return processFieldsList(rawTemplate, fields)
+}
+
+func fieldsListWithTag(fields []Field, fragment, tag string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	var filteredFields []Field
+	for _, thisField := range fields {
+		if _, hasTag := thisField.Tags[tag]; hasTag {
+			filteredFields = append(filteredFields, thisField)
+		}
+	}
+
+	return processFieldsList(rawTemplate, filteredFields)
+}
+
+func fieldsListWithTagValue(fields []Field, fragment, tag, value string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	var filteredFields []Field
+
+	for _, thisField := range fields {
+		if thisValue, _ := thisField.Tags[tag]; thisValue == value {
+			filteredFields = append(filteredFields, thisField)
+		}
+	}
+
+	return processFieldsList(rawTemplate, filteredFields)
+}
+
+func typedFieldsList(fields []Field, fragment string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	return processFieldsList(rawTemplate, fields)
+}
+
+func typedFieldsListWithTag(fields []Field, fragment, tag string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	var filteredFields []Field
+	for _, thisField := range fields {
+		if _, hasTag := thisField.Tags[tag]; hasTag {
+			filteredFields = append(filteredFields, thisField)
+		}
+	}
+
+	return processFieldsList(rawTemplate, filteredFields)
+}
+
+func typedFieldsListWithTagValue(fields []Field, fragment, tag, value string) (string, error) {
+	rawTemplate := `
+{{- $len := len .Fields }}
+	{{- range $index, $field := .Fields -}}
+	` + fragment + `{{ isNotLast $len $index ", " }}
+{{- end }}`
+
+	var filteredFields []Field
+
+	for _, thisField := range fields {
+		if thisValue, _ := thisField.Tags[tag]; thisValue == value {
+			filteredFields = append(filteredFields, thisField)
+		}
+	}
+
+	return processFieldsList(rawTemplate, filteredFields)
 }
 
 // generate predictable test data based on the type and index
