@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestUAT(t *testing.T) {
+func TestUAT_template(t *testing.T) {
 	scenarios := []struct {
 		desc       string
 		inTemplate string
@@ -112,6 +112,72 @@ type myType struct {
 			}
 
 			parsedTemplate, err := getTemplate().Parse(scenario.inTemplate)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			buffer := &bytes.Buffer{}
+			resultErr := parsedTemplate.Execute(buffer, vars)
+			result := buffer.String()
+
+			require.Equal(t, scenario.expectErr, resultErr != nil, "expected error", resultErr)
+			assert.Equal(t, scenario.expected, result, "expected result")
+		})
+	}
+}
+
+func TestUAT_noop(t *testing.T) {
+	scenarios := []struct {
+		desc      string
+		inSrc     string
+		expected  string
+		expectErr bool
+	}{
+		{
+			desc: "simple",
+			inSrc: `package test
+
+type myInterface interface {
+	ID() int64
+	Name() string 
+	Balance() float64
+	Login(username, password string) (Session, error)
+	Record(message string, args ...interface{})
+}
+`,
+			expected: `
+package test
+
+type noopMyInterface struct {}
+
+func (*noopMyInterface) ID() (_ int64) { return }
+
+func (*noopMyInterface) Name() (_ string) { return }
+
+func (*noopMyInterface) Balance() (_ float64) { return }
+
+func (*noopMyInterface) Login(_, _ string) (_ Session, _ error) { return }
+
+func (*noopMyInterface) Record(_ string, _ ...interface{}) {}
+
+`,
+			expectErr: false,
+		},
+	}
+
+	for _, s := range scenarios {
+		scenario := s
+		t.Run(scenario.desc, func(t *testing.T) {
+			typeName := "myInterface"
+
+			vars := TemplateData{
+				TypeName:    typeName,
+				PackageName: "test",
+				Fields:      GetFields(getASTFromSrc(scenario.inSrc), typeName),
+				Methods:     GetMethods(getASTFromSrc(scenario.inSrc), typeName),
+			}
+
+			parsedTemplate, err := getTemplate().Parse(NoopTemplate)
 			if err != nil {
 				log.Fatal(err)
 			}

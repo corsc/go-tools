@@ -39,7 +39,7 @@ type Gonerator struct {
 }
 
 // Build is the main method of this struct/program
-func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string, dryRun bool) {
+func (g *Gonerator) Build(dir string, typeName string, templateFile string, outputFile string, extras string, dryRun, noop bool) {
 	g.data = tmpl.TemplateData{
 		TypeName:     typeName,
 		TemplateFile: templateFile,
@@ -52,21 +52,35 @@ func (g *Gonerator) Build(dir string, typeName string, templateFile string, outp
 
 	g.buildHeader()
 
-	var path string
-	if !strings.HasPrefix(templateFile, "/") {
-		path = dir + templateFile
-	} else {
-		path = templateFile
-	}
+	outputName := g.buildOutputName(dir, outputFile)
 
-	templateContent, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
+	var templateContent string
+	var err error
+
+	if noop {
+		fmt.Fprintf(os.Stdout, "Gonerating NOOP for %s in file %s with extras [%v]\n", typeName, outputName, extras)
+		templateContent = tmpl.NoopTemplate
+	} else {
+		fmt.Fprintf(os.Stdout, "Gonerating for %s with template %s in file %s with extras [%v]\n", typeName, templateFile, outputName, extras)
+
+		var path string
+		if !strings.HasPrefix(templateFile, "/") {
+			path = dir + templateFile
+		} else {
+			path = templateFile
+		}
+
+		templateContentRaw, err := ioutil.ReadFile(path)
+		if err != nil {
+			panic(err)
+		}
+
+		templateContent = string(templateContentRaw)
 	}
 
 	g.buildTemplateData(extras)
 
-	g.generate(string(templateContent))
+	g.generate(templateContent)
 
 	contents, err := g.gonerate(outputFile)
 	if dryRun {
@@ -76,7 +90,7 @@ func (g *Gonerator) Build(dir string, typeName string, templateFile string, outp
 			os.Exit(-1)
 		}
 
-		err = g.writeFile(dir, outputFile, contents)
+		err = g.writeFile(outputName, contents)
 		if err != nil {
 			os.Exit(-1)
 		}
@@ -213,9 +227,7 @@ func (g *Gonerator) gonerate(filename string) ([]byte, error) {
 	return g.toBytes(), nil
 }
 
-func (g *Gonerator) writeFile(dir string, filename string, contents []byte) error {
-	outputName := filepath.Join(dir, strings.ToLower(filename))
-
+func (g *Gonerator) writeFile(outputName string, contents []byte) error {
 	directory := filepath.Dir(outputName)
 	err := os.MkdirAll(directory, 0700)
 	if err != nil {
@@ -228,6 +240,10 @@ func (g *Gonerator) writeFile(dir string, filename string, contents []byte) erro
 	}
 
 	return err
+}
+
+func (g *Gonerator) buildOutputName(dir, filename string) string {
+	return filepath.Join(dir, strings.ToLower(filename))
 }
 
 func isGo(filename string) bool {

@@ -92,13 +92,16 @@ func extractFieldsFromAst(items []*ast.Field) []MethodField {
 
 	for _, item := range items {
 		typeStr := getTypeString(item.Type)
+
 		funcField := MethodField{
 			Type:  typeStr,
 			Names: make([]string, len(item.Names)),
 		}
+
 		for i := 0; i < len(item.Names); i++ {
 			funcField.Names[i] = item.Names[i].Name
 		}
+
 		output = append(output, funcField)
 	}
 
@@ -111,6 +114,7 @@ func getTypeString(expr ast.Expr) string {
 	switch etype := expr.(type) {
 	case *ast.ArrayType:
 		result = fmt.Sprintf("[]%s", getTypeString(etype.Elt))
+
 	case *ast.MapType:
 		result = fmt.Sprintf("map[%s]%s", etype.Key, etype.Value)
 
@@ -120,8 +124,20 @@ func getTypeString(expr ast.Expr) string {
 	case *ast.StarExpr:
 		result = fmt.Sprintf("*%s", getTypeString(etype.X))
 
+	case *ast.Ellipsis:
+		result = fmt.Sprintf("...%s", getTypeString(etype.Elt))
+
+	case *ast.InterfaceType:
+		// special processing for `interface{}` type
+		if etype.Methods.Opening == etype.Methods.Closing-1 {
+			result = "interface{}"
+		} else {
+			result = fmt.Sprintf("%v", etype.Interface)
+		}
+
 	default:
 		result = fmt.Sprintf("%s", etype)
 	}
+
 	return result
 }

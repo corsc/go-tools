@@ -24,6 +24,32 @@ import (
 
 const (
 	invalidStr = "invalid"
+
+	NoopTemplate = `{{- $typeName := firstUpper .TypeName }}
+package {{ .PackageName }}
+
+type noop{{ $typeName }} struct {}
+{{- range $methodIndex, $method := .Methods }}
+{{- $paramsLen := len $method.Params }}
+{{- $resultsLen := len $method.Results }}
+
+func (*noop{{ $typeName }}) {{ $method.Name }}(
+	{{- range $paramIndex, $param := $method.Params }}
+        {{- $paramNamesLen := len $param.Names }}
+		{{- range $paramNameIndex, $paramName := $param.Names }}_{{ isNotLast $paramNamesLen $paramNameIndex ", " }}{{ end }} {{ $param.Type }}{{ isNotLast $paramsLen $paramIndex ", " }}
+	{{- end -}}
+) {{ if ne $resultsLen 0 -}}
+(
+	{{- range $resultIndex, $result := $method.Results }}
+        {{- $resultNamesLen := len $result.Names }}
+		{{- if eq $resultNamesLen 0 }}_{{ end }}
+		{{- range $resultNameIndex, $resultName := $result.Names }}_{{ isNotLast $resultNamesLen $resultNameIndex ", " }}{{ end }} {{ $result.Type }}{{ isNotLast $resultsLen $resultIndex ", " }}
+	{{- end -}}
+) {{ end -}}
+{ {{- if ne $resultsLen 0 }} return {{ end -}} }
+{{- end }}
+
+`
 )
 
 // TemplateData is the data structure passed to the template engine

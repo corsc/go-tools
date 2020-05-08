@@ -22,13 +22,9 @@
 //
 // Run this using the command:
 //
-//	gonerator -type=MyType -template=template.tmpl -test-template=test-template.tmpl
+//	gonerator -type=MyType -i=template.tmpl -o my_type.go
 //
-// will create the files mytype_gonerated.go & mytype_gonerated_test.go
-//
-// Typically this process would be run using go generate, like this:
-//
-//	// go:generate gonerator -type=MyType -template=template.tmpl -test-template=test-template.tmpl
+// will create the files my_type.go
 //
 // This code was adapted and extended from https://github.com/golang/tools/blob/master/cmd/stringer/stringer.go
 
@@ -50,12 +46,13 @@ func main() {
 	dir := "./"
 	g := &gonerator.Gonerator{}
 	g.ParsePackageDir(dir)
-	g.Build(dir, *typeName, *templateFile, *outputFile, *extras, *dryRun)
+	g.Build(dir, *typeName, *templateFile, *outputFile, *extras, *dryRun, *noop)
 }
 
 var (
 	typeName     = flag.String("i", "", "type name; must be set")
-	templateFile = flag.String("t", "", "template file; must be set")
+	templateFile = flag.String("t", "", "template file; one of template and noop must be set")
+	noop         = flag.Bool("noop", false, "generate a NO-OP implementation of the supplied interface; one of template and noop must be set")
 	outputFile   = flag.String("o", "", "output file; must be set")
 	dryRun       = flag.Bool("d", false, "dry-run; output to stdOut instead of updating the file")
 	extras       = flag.String("e", "", "comma separated list of extra values; optional")
@@ -64,7 +61,11 @@ var (
 // Usage outputs the usage of this tool to std err
 func Usage() {
 	commons.LogError("Usage of %s:\n", os.Args[0])
-	commons.LogError("\tgonerator [flags] -i=T -t=template.tmpl [-o-T_gonerated.go]\n")
+	commons.LogError("\tgonerator [flags] -i=MyType -t=template.tmpl [-o=mytype_gonerated.go]\n")
+	commons.LogError("\t\tor\n")
+	commons.LogError("\tgonerator [flags] -i=MyType -noop [-o=mytype_gonerated.go]\n")
+	commons.LogError("\t\tor\n")
+	commons.LogError("\t//go:generate gonerator [flags] -i=MyType -t=template.tmpl -o=mytype_gonerated.go]\n")
 	commons.LogError("Flags:\n")
 	flag.PrintDefaults()
 }
@@ -78,7 +79,7 @@ func getInputs() {
 	flag.Usage = Usage
 	flag.Parse()
 
-	if len(*typeName) == 0 || len(*templateFile) == 0 || len(*outputFile) == 0 {
+	if len(*typeName) == 0 || len(*outputFile) == 0 || (len(*templateFile) == 0 && *noop == false) {
 		flag.Usage()
 		os.Exit(2)
 	}
