@@ -245,3 +245,57 @@ func TestParams(t *testing.T) {
 		assert.Equal(t, scenario.expected, result, scenario.desc)
 	}
 }
+
+func TestTestData(t *testing.T) {
+	testDataIndex := 0
+
+	scenarios := []struct {
+		desc       string
+		inDestType string
+		expected   string
+	}{
+		{
+			desc:       "happy path - int",
+			inDestType: "int",
+			expected:   intTestData[testDataIndex],
+		},
+		{
+			desc:       "happy path - float64",
+			inDestType: "float64",
+			expected:   floatTestData[testDataIndex],
+		},
+		{
+			desc:       "happy path - string",
+			inDestType: "string",
+			expected:   stringTestData[testDataIndex],
+		},
+		{
+			desc:       "happy path - byte",
+			inDestType: "[]byte",
+			expected:   byteTestData[testDataIndex],
+		},
+		{
+			desc:       "happy path - time.Time",
+			inDestType: "time.Time",
+			expected:   "time.Time{}",
+		},
+		{
+			desc:       "happy path - random object",
+			inDestType: "foo.Bar",
+			expected:   "foo.Bar{}",
+		},
+		{
+			desc:       "happy path - random pointer",
+			inDestType: "*foo.Bar",
+			expected:   "nil",
+		},
+	}
+
+	for _, s := range scenarios {
+		scenario := s
+		t.Run(scenario.desc, func(t *testing.T) {
+			result := testData(testDataIndex, scenario.inDestType)
+			assert.Equal(t, scenario.expected, result, "expected result")
+		})
+	}
+}

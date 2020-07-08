@@ -263,14 +263,16 @@ func testData(index int, destType string) string {
 	case "string":
 		return stringTestData[index%10]
 
-	case "[]byte]":
+	case "[]byte":
 		return byteTestData[index%10]
+	}
 
-	case "time.Time":
-		return "time.Time{}"
+	switch {
+	case strings.HasPrefix(destType, "*"):
+		return "nil"
 
 	default:
-		return "nil"
+		return destType + "{}"
 	}
 }
 
