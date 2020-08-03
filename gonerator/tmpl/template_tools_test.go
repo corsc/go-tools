@@ -260,6 +260,16 @@ func TestTestData(t *testing.T) {
 			expected:   intTestData[testDataIndex],
 		},
 		{
+			desc:       "happy path - int64",
+			inDestType: "int64",
+			expected:   "int64(" + intTestData[testDataIndex] + ")",
+		},
+		{
+			desc:       "happy path - float32",
+			inDestType: "float32",
+			expected:   "float32(" + floatTestData[testDataIndex] + ")",
+		},
+		{
 			desc:       "happy path - float64",
 			inDestType: "float64",
 			expected:   floatTestData[testDataIndex],

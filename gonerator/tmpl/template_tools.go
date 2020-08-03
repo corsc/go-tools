@@ -254,10 +254,16 @@ func fieldsListWithTagValue(fields []Field, fragment, tag, value string) (string
 // generate predictable test data based on the type and index
 func testData(index int, destType string) string {
 	switch destType {
-	case "int", "int8, int16", "int32", "int64":
+	case "int":
 		return intTestData[index%10]
 
-	case "float32", "float64":
+	case "int8", "int16", "int32", "int64":
+		return destType + "(" + intTestData[index%10] + ")"
+
+	case "float32":
+		return destType + "(" + floatTestData[index%10] + ")"
+
+	case "float64":
 		return floatTestData[index%10]
 
 	case "string":
