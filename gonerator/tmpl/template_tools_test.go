@@ -313,47 +313,32 @@ func TestTestData(t *testing.T) {
 func TestTypeName(t *testing.T) {
 	scenarios := []struct {
 		desc     string
-		in       Field
+		in       string
 		expected string
 	}{
 		{
-			desc: "int",
-			in: Field{
-				Name: "Fu",
-				Type: "int",
-			},
+			desc:     "int",
+			in:       "int",
 			expected: "Int",
 		},
 		{
-			desc: "int64",
-			in: Field{
-				Name: "Bar",
-				Type: "int64",
-			},
+			desc:     "int64",
+			in:       "int64",
 			expected: "Int64",
 		},
 		{
-			desc: "Bytes",
-			in: Field{
-				Name: "Fu",
-				Type: "[]byte",
-			},
+			desc:     "Bytes",
+			in:       "[]byte",
 			expected: "SliceOfBytes",
 		},
 		{
-			desc: "Time",
-			in: Field{
-				Name: "Fu",
-				Type: "time.Time",
-			},
+			desc:     "Time",
+			in:       "time.Time",
 			expected: "TimeTime",
 		},
 		{
-			desc: "Slice Of String",
-			in: Field{
-				Name: "Fu",
-				Type: "[]string",
-			},
+			desc:     "Slice Of String",
+			in:       "[]string",
 			expected: "SliceOfStrings",
 		},
 	}

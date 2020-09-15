@@ -139,22 +139,20 @@ func sliceType(field Field) string {
 // * []byte -> SliceOfBytes
 // * map[string]string -> Map
 // * Objects like time.Time{} -> timeTime
-func typeName(field Field) string {
-	raw := field.Type
-
-	if strings.HasPrefix(raw, "[]") {
-		return "SliceOf" + strings.Title(raw[2:]) + "s"
+func typeName(typeName string) string {
+	if strings.HasPrefix(typeName, "[]") {
+		return "SliceOf" + strings.Title(typeName[2:]) + "s"
 	}
 
-	if strings.HasPrefix(raw, "map[") {
+	if strings.HasPrefix(typeName, "map[") {
 		return "Map"
 	}
 
-	if strings.Contains(raw, ".") {
-		return strings.ReplaceAll(strings.Title(raw), ".", "")
+	if strings.Contains(typeName, ".") {
+		return strings.ReplaceAll(strings.Title(typeName), ".", "")
 	}
 
-	return strings.Title(raw)
+	return strings.Title(typeName)
 }
 
 func isMap(field Field) bool {
