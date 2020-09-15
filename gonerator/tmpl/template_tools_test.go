@@ -309,3 +309,57 @@ func TestTestData(t *testing.T) {
 		})
 	}
 }
+
+func TestTypeName(t *testing.T) {
+	scenarios := []struct {
+		desc     string
+		in       Field
+		expected string
+	}{
+		{
+			desc: "int",
+			in: Field{
+				Name: "Fu",
+				Type: "int",
+			},
+			expected: "Int",
+		},
+		{
+			desc: "int64",
+			in: Field{
+				Name: "Bar",
+				Type: "int64",
+			},
+			expected: "Int64",
+		},
+		{
+			desc: "Bytes",
+			in: Field{
+				Name: "Fu",
+				Type: "[]byte",
+			},
+			expected: "SliceOfBytes",
+		},
+		{
+			desc: "Time",
+			in: Field{
+				Name: "Fu",
+				Type: "time.Time",
+			},
+			expected: "TimeTime",
+		},
+		{
+			desc: "Slice Of String",
+			in: Field{
+				Name: "Fu",
+				Type: "[]string",
+			},
+			expected: "SliceOfStrings",
+		},
+	}
+
+	for _, scenario := range scenarios {
+		result := typeName(scenario.in)
+		assert.Equal(t, scenario.expected, result, scenario.desc)
+	}
+}

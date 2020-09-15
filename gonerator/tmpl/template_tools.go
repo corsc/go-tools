@@ -90,6 +90,7 @@ func getFuncMap() template.FuncMap {
 		"toLower":                strings.ToLower,
 		"isSlice":                isSlice,
 		"sliceType":              sliceType,
+		"typeName":               typeName,
 		"isMap":                  isMap,
 		"add":                    add,
 		"paramsWithType":         paramsWithType,
@@ -130,6 +131,30 @@ func sliceType(field Field) string {
 	}
 
 	return strings.Replace(field.Type, "[]", "", 1)
+}
+
+// Returns the type name as a string.
+// Useful for generating function names for converters.
+// Includes special processing:
+// * []byte -> SliceOfBytes
+// * map[string]string -> Map
+// * Objects like time.Time{} -> timeTime
+func typeName(field Field) string {
+	raw := field.Type
+
+	if strings.HasPrefix(raw, "[]") {
+		return "SliceOf" + strings.Title(raw[2:]) + "s"
+	}
+
+	if strings.HasPrefix(raw, "map[") {
+		return "Map"
+	}
+
+	if strings.Contains(raw, ".") {
+		return strings.ReplaceAll(strings.Title(raw), ".", "")
+	}
+
+	return strings.Title(raw)
 }
 
 func isMap(field Field) bool {
