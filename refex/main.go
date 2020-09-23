@@ -18,6 +18,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/corsc/go-tools/refex/internal/gotools"
 	"io"
 	"io/ioutil"
 	"os"
@@ -25,7 +26,6 @@ import (
 	"strings"
 
 	"github.com/corsc/go-commons/iocloser"
-	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/refex/refex"
 )
 
@@ -53,7 +53,7 @@ func main() {
 		exitWithError(err)
 	}
 
-	paths := []string{}
+	var paths []string
 
 	if pathInfo.IsDir() {
 		files, err := ioutil.ReadDir(pathSupplied)
@@ -84,12 +84,12 @@ func do(fileName string, settings *settings) {
 	// format code
 	if !settings.skipFormat {
 		codeAsBytes := []byte(result)
-		codeAsBytes, err = commons.GoFmt(codeAsBytes)
+		codeAsBytes, err = gotools.GoFmt(codeAsBytes)
 		if err != nil {
 			exitWithError(err)
 		}
 
-		codeAsBytes, err = commons.GoImports(fileName, codeAsBytes)
+		codeAsBytes, err = gotools.GoImports(fileName, codeAsBytes)
 		if err != nil {
 			exitWithError(err)
 		}
@@ -110,7 +110,7 @@ func do(fileName string, settings *settings) {
 
 	_, err = fmt.Fprint(writer, result)
 	if err != nil {
-		commons.LogError("failed to write to writer with err: %s", err)
+		_, _ = fmt.Fprintf(os.Stderr, "failed to write to writer with err: %s", err)
 	}
 }
 
@@ -129,6 +129,6 @@ func sanityCheck(settings *settings, fileName string) {
 }
 
 func exitWithError(err error) {
-	commons.LogError("Error: %s\n", err)
+	_, _ = fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 	os.Exit(1)
 }

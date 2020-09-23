@@ -32,10 +32,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/corsc/go-tools/commons"
 	"github.com/corsc/go-tools/gonerator/gonerator"
 )
 
@@ -60,13 +60,13 @@ var (
 
 // Usage outputs the usage of this tool to std err
 func Usage() {
-	commons.LogError("Usage of %s:\n", os.Args[0])
-	commons.LogError("\tgonerator [flags] -i=MyType -t=template.tmpl [-o=mytype_gonerated.go]\n")
-	commons.LogError("\t\tor\n")
-	commons.LogError("\tgonerator [flags] -i=MyType -noop [-o=mytype_gonerated.go]\n")
-	commons.LogError("\t\tor\n")
-	commons.LogError("\t//go:generate gonerator [flags] -i=MyType -t=template.tmpl -o=mytype_gonerated.go]\n")
-	commons.LogError("Flags:\n")
+	_, _ = fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+	_, _ = fmt.Fprintf(os.Stderr, "\tgonerator [flags] -i=MyType -t=template.tmpl [-o=mytype_gonerated.go]\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\t\tor\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\tgonerator [flags] -i=MyType -noop [-o=mytype_gonerated.go]\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\t\tor\n")
+	_, _ = fmt.Fprintf(os.Stderr, "\t//go:generate gonerator [flags] -i=MyType -t=template.tmpl -o=mytype_gonerated.go]\n")
+	_, _ = fmt.Fprintf(os.Stderr, "Flags:\n")
 	flag.PrintDefaults()
 }
 

@@ -17,6 +17,8 @@ package fiximports
 import (
 	"bytes"
 	"fmt"
+	"github.com/corsc/go-tools/fiximports/fiximports/internal/gotools"
+	"github.com/corsc/go-tools/fiximports/fiximports/internal/log"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -27,8 +29,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-
-	"github.com/corsc/go-tools/commons"
 )
 
 const lineBreak = '\n'
@@ -38,13 +38,13 @@ func ProcessFiles(files []string, outputWriter io.Writer) {
 	for _, filename := range files {
 		originalCode, err := ioutil.ReadFile(filename)
 		if err != nil {
-			commons.LogError("skipping file '%s': failed to read with err err: %v\n", filename, err)
+			log.Error("skipping file '%s': failed to read with err err: %v\n", filename, err)
 			continue
 		}
 
 		newCode, err := processFile(filename, originalCode)
 		if err != nil {
-			commons.LogError("skipping file '%s': failed to generate with err err: %v\n", filename, err)
+			log.Error("skipping file '%s': failed to generate with err err: %v\n", filename, err)
 			continue
 		}
 
@@ -61,7 +61,7 @@ func updateSourceFile(filename string, originalCode, newCode []byte) {
 		fmt.Fprintf(os.Stdout, "%s\n", filename)
 		err := ioutil.WriteFile(filename, newCode, 0)
 		if err != nil {
-			commons.LogError("skipping file '%s': failed to write with err err: %v\n", filename, err)
+			log.Error("skipping file '%s': failed to write with err err: %v\n", filename, err)
 		}
 	}
 }
@@ -238,7 +238,7 @@ func (v *myVisitor) replaceImports(newImports string) []byte {
 // validate the result by running it through GoFmt
 func (v *myVisitor) validate(newCode []byte) error {
 	// TODO: add "fast" mode that skips this check or remove this when we have handled all the weird cases
-	_, err := commons.GoFmt(newCode)
+	_, err := gotools.GoFmt(newCode)
 	return err
 }
 
@@ -247,7 +247,7 @@ func (v *myVisitor) detectImportDecl(decl *ast.GenDecl) {
 		return
 	}
 
-	thisStartPos, thisEndPos := commons.GetLineBoundary(v.source, decl.Pos())
+	thisStartPos, thisEndPos := gotools.GetLineBoundary(v.source, decl.Pos())
 	if thisStartPos < v.startPos {
 		v.startPos = thisStartPos
 	}

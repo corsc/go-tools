@@ -27,7 +27,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/corsc/go-tools/commons"
+	"github.com/corsc/go-tools/gonerator/internal/gotools"
 	"github.com/corsc/go-tools/gonerator/tmpl"
 )
 
@@ -182,7 +182,7 @@ func (g *Gonerator) parsePackage(directory string, names []string) {
 func (g *Gonerator) format() ([]byte, error) {
 	original := g.buf.Bytes()
 
-	result, err := commons.GoFmt(original)
+	result, err := gotools.GoFmt(original)
 	if err != nil {
 		// Should never happen, but can arise when developing this code.
 		// The user can compile the output to see the error.
@@ -191,7 +191,7 @@ func (g *Gonerator) format() ([]byte, error) {
 		return original, err
 	}
 
-	result, err = commons.GoImports(g.data.OutputFile, result)
+	result, err = gotools.GoImports(g.data.OutputFile, result)
 	if err != nil {
 		// Should never happen, but can arise when developing this code.
 		// The user can compile the output to see the error.

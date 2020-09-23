@@ -3,9 +3,8 @@ package fiximports
 import (
 	"flag"
 	"fmt"
+	"github.com/corsc/go-tools/fiximports/fiximports/internal/filetools"
 	"strings"
-
-	"github.com/corsc/go-tools/commons"
 )
 
 // FilesFromArgs translates supplied inputs into a list of filenames
@@ -29,23 +28,23 @@ func FilesFromArgsFactory(numArgs int) FilesFromArgs {
 type noArgs struct{}
 
 func (f *noArgs) FileNames() ([]string, error) {
-	return commons.GetGoFilesFromCurrentDir()
+	return filetools.GetGoFilesFromCurrentDir()
 }
 
 type singleArg struct{}
 
 func (f *singleArg) FileNames() ([]string, error) {
 	arg := flag.Arg(0)
-	if strings.HasSuffix(arg, "/...") && commons.IsDir(arg[:len(arg)-4]) {
-		return commons.GetGoFilesFromDirectoryRecursive(arg)
+	if strings.HasSuffix(arg, "/...") && filetools.IsDir(arg[:len(arg)-4]) {
+		return filetools.GetGoFilesFromDirectoryRecursive(arg)
 	}
 
-	if commons.IsDir(arg) {
-		return commons.GetGoFilesFromDir(arg)
+	if filetools.IsDir(arg) {
+		return filetools.GetGoFilesFromDir(arg)
 	}
 
-	if commons.FileExists(arg) {
-		return commons.GetGoFiles(arg)
+	if filetools.FileExists(arg) {
+		return filetools.GetGoFiles(arg)
 	}
 
 	return nil, fmt.Errorf("'%s' did not resolve to a directory or file", arg)
@@ -54,5 +53,5 @@ func (f *singleArg) FileNames() ([]string, error) {
 type unknownArgs struct{}
 
 func (f *unknownArgs) FileNames() ([]string, error) {
-	return commons.GetGoFiles(flag.Args()...)
+	return filetools.GetGoFiles(flag.Args()...)
 }
