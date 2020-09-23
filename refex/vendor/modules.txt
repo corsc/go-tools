@@ -1,7 +1,7 @@
 # github.com/corsc/go-commons v1.1.1
 ## explicit
 github.com/corsc/go-commons/iocloser
-# github.com/corsc/go-tools/commons v0.0.0 => ../commons/
+# github.com/corsc/go-tools/commons v1.2.1 => ../commons/
 ## explicit
 github.com/corsc/go-tools/commons
 # github.com/davecgh/go-spew v1.1.1
