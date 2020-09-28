@@ -119,16 +119,13 @@ func getTypeString(expr ast.Expr) string {
 		if etype.Dir == ast.SEND {
 			chanStr += `<-`
 		}
-
 		if etype.Dir == ast.RECV {
 			chanStr = `<-` + chanStr
 		}
 
 		result = fmt.Sprintf("%s %s", chanStr, getTypeString(etype.Value))
 	case *ast.StructType:
-		if len(etype.Fields.List) == 0 {
-			result = "struct{}"
-		}
+		result = "struct{}"
 	case *ast.MapType:
 		result = fmt.Sprintf("map[%s]%s", etype.Key, etype.Value)
 
