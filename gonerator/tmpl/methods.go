@@ -114,7 +114,21 @@ func getTypeString(expr ast.Expr) string {
 	switch etype := expr.(type) {
 	case *ast.ArrayType:
 		result = fmt.Sprintf("[]%s", getTypeString(etype.Elt))
+	case *ast.ChanType:
+		chanStr := "chan"
+		if etype.Dir == ast.SEND {
+			chanStr += `<-`
+		}
 
+		if etype.Dir == ast.RECV {
+			chanStr = `<-` + chanStr
+		}
+
+		result = fmt.Sprintf("%s %s", chanStr, getTypeString(etype.Value))
+	case *ast.StructType:
+		if len(etype.Fields.List) == 0 {
+			result = "struct{}"
+		}
 	case *ast.MapType:
 		result = fmt.Sprintf("map[%s]%s", etype.Key, etype.Value)
 

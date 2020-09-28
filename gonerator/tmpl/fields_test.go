@@ -15,6 +15,7 @@
 package tmpl
 
 import (
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -73,18 +74,28 @@ func TestGetFieldsWithExoticTypes(t *testing.T) {
 type myType struct {
 	A []string
 	B map[string]string
+	C <-chan map[string]string
+	D chan<- map[string]string
+	E chan struct{}
 }
 `
 	srcAST := getASTFromSrc(src)
 
 	result := GetFields(srcAST, "myType")
+	fmt.Printf("yyy AST=%v\n", result)
 
 	expected1 := Field{Name: "A", Type: "[]string", NonArrayType: "string"}
 	expected2 := Field{Name: "B", Type: "map[string]string", NonArrayType: "map[string]string"}
+	expected3 := Field{Name: "C", Type: "<-chan map[string]string", NonArrayType: "<-chan map[string]string"}
+	expected4 := Field{Name: "D", Type: "chan<- map[string]string", NonArrayType: "chan<- map[string]string"}
+	expected5 := Field{Name: "E", Type: "chan struct{}", NonArrayType: "chan struct{}"}
 
-	assert.Equal(t, 2, len(result))
+	assert.Equal(t, 5, len(result))
 	assert.Equal(t, expected1, result[0])
 	assert.Equal(t, expected2, result[1])
+	assert.Equal(t, expected3, result[2])
+	assert.Equal(t, expected4, result[3])
+	assert.Equal(t, expected5, result[4])
 }
 
 func getASTFromSrc(src string) *ast.File {
