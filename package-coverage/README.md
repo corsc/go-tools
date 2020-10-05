@@ -16,8 +16,8 @@ This tool intents to calculate the test coverage of a particular package (includ
 
 ## Notes:
 * The coverage and statements are recursive (except in single dir mode).  Meaning the values for ./packageA/ include the values from ./packageA/packageB/
-* In order to calculate coverage for directories with no tests, this tool will make a fake test file called `fake_test.go` prior to running coverage calcuation.  It will also remove it when the calculation is complete.  Cancelling this tool mid-run could cause this file to be remain.  This file can be deleted.
-* This tool is not smart enough to detect existing `fake_test.go` files and not remove them.  All such files will be deleted.
+* In order to calculate coverage for directories with no tests or code, this tool will make a fake test file called `fake_test.go` and a fake code file called `fake_code.go` prior to running coverage calcuation.  It will also remove them when the calculation is complete.  Cancelling this tool mid-run could cause these files to be remain.  These files can be deleted.
+* This tool is not smart enough to detect existing `fake_test.go` and `fake_code.go` files and not remove them.  All such files will be deleted.
 * If things don't look right, please run in verbose mode `-v` and include that in any bug report.
 
 ## Output Sample

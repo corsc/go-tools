@@ -33,6 +33,7 @@ import (
 const coverageFilename = "profile.cov"
 
 var fakeTestFilename = "fake_test.go"
+var fakeCodeFilename = "fake_code.go"
 
 func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag string, actionFunc func(string)) {
 	paths, err := utils.FindAllGoDirs(basePath)
@@ -57,7 +58,9 @@ func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bo
 	packageName := findPackageName(path)
 
 	fakeTestFile := addFakeTest(path, packageName)
-	defer removeFakeTest(fakeTestFile)
+	fakeCodeFile := addFakeCode(path, packageName)
+	defer removeFakeFile(fakeTestFile)
+	defer removeFakeFile(fakeCodeFile)
 
 	err := execCoverage(path, quietMode, race, tags)
 	if err != nil {
@@ -83,8 +86,20 @@ func addFakeTest(path string, packageName string) string {
 	return testFilename
 }
 
+func addFakeCode(path string, packageName string) string {
+	codeFilename := createCodeFilename(path)
+
+	createCodeFile(packageName, codeFilename)
+
+	return codeFilename
+}
+
 func createTestFilename(path string) string {
 	return path + fakeTestFilename
+}
+
+func createCodeFilename(path string) string {
+	return path + fakeCodeFilename
 }
 
 // find the package name by using the go AST
@@ -134,13 +149,43 @@ func TestThisTestDoesntReallyTestAnything(t *testing.T) {}
 	}
 }
 
-// remove the previously added fake test (i.e. clean up)
-func removeFakeTest(filename string) {
-	utils.LogWhenVerbose("[coverage] remove test file @ %s", filename)
+// create a fake function so that all directories are guaranteed to contain code (and therefore coverage will be generated)
+func createCodeFile(packageName string, codeFilename string) {
+	utils.LogWhenVerbose("[coverage] created code for package %s file @ %s", packageName, codeFilename)
+
+	if _, err := os.Stat(codeFilename); err == nil {
+		utils.LogWhenVerbose("[coverage] file already exists @ %s cowardly refusing to overwrite", codeFilename)
+		return
+	}
+
+	file, err := os.OpenFile(codeFilename, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while creating code file %s", err)
+		return
+	}
+
+	_, err = file.WriteString(`package ` + packageName + `
+
+func ThisCodeDoesntReallyDoAnything() {}
+`)
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while writing code file %s", err)
+		return
+	}
+
+	err = file.Close()
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while closing file '%s", err)
+	}
+}
+
+// remove a previously added fake file (i.e. clean up)
+func removeFakeFile(filename string) {
+	utils.LogWhenVerbose("[coverage] remove fake file @ %s", filename)
 
 	err := os.Remove(filename)
 	if err != nil {
-		utils.LogWhenVerbose("[coverage] error while removing test file @ %s, err: %s", filename, err)
+		utils.LogWhenVerbose("[coverage] error while removing fake file @ %s, err: %s", filename, err)
 	}
 }
 
