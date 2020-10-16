@@ -115,11 +115,6 @@ func (g *Generator) do(paths []string) {
 	}
 	close(jobsCh)
 
-	// clean up
-	for _, path := range paths {
-		removeFakes(path)
-	}
-
 	// wait until everything is done
 	wg.Wait()
 }
@@ -129,5 +124,6 @@ func doWorker(jobsCh <-chan string, wg *sync.WaitGroup, exclusion *regexp.Regexp
 
 	for path := range jobsCh {
 		generateCoverage(path, exclusion, quietMode, race, tags)
+		removeFakes(path)
 	}
 }
