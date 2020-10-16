@@ -52,7 +52,7 @@ func TestProcessAllDirs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			matcher := regexp.MustCompile(test.Exclude)
-			matched := []string{}
+			var matched []string
 			processAllDirs("../test-data/pathmatcher", matcher, "processAllDirs", func(path string) {
 				matched = append(matched, path)
 			})
@@ -65,16 +65,20 @@ func TestProcessAllDirs(t *testing.T) {
 
 }
 
-func TestAddFakeTest_HappyPath(t *testing.T) {
+func TestAddFakes_HappyPath(t *testing.T) {
 	path := utils.GetCurrentDir()
 	packageName := "generator"
-	expectedFilename := path + fakeTestFilename
-	defer removeTestFile(expectedFilename)
 
-	result := addFakeTest(path, packageName)
-	assert.Equal(t, expectedFilename, result)
+	expectedTestFilename := path + fakeTestFilename
+	defer removeTestFile(expectedTestFilename)
 
-	assertFileExists(t, expectedFilename)
+	expectedCodeFilename := path + fakeCodeFilename
+	defer removeTestFile(expectedCodeFilename)
+
+	addFakes(path, packageName)
+
+	assertFileExists(t, expectedTestFilename)
+	assertFileExists(t, expectedCodeFilename)
 }
 
 func TestCreateTestFilename(t *testing.T) {
@@ -104,17 +108,6 @@ func TestCreateTestFile(t *testing.T) {
 	createTestFile(packageName, testFile)
 
 	assertFileExists(t, testFile)
-}
-
-func TestRemoveFakeTest(t *testing.T) {
-	packageName := "mypackage"
-	testFile := utils.GetCurrentDir() + "my_test.go"
-
-	createTestFile(packageName, testFile)
-	removeFakeTest(testFile)
-
-	_, err := os.OpenFile(testFile, os.O_RDWR, 0666)
-	assert.True(t, os.IsNotExist(err))
 }
 
 func removeTestFile(path string) {

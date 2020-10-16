@@ -57,10 +57,7 @@ func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag st
 func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bool, tags string) {
 	packageName := findPackageName(path)
 
-	fakeTestFile := addFakeTest(path, packageName)
-	fakeCodeFile := addFakeCode(path, packageName)
-	defer removeFakeFile(fakeTestFile)
-	defer removeFakeFile(fakeCodeFile)
+	addFakes(path, packageName)
 
 	err := execCoverage(path, quietMode, race, tags)
 	if err != nil {
@@ -77,21 +74,28 @@ func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bo
 	}
 }
 
-// add a fake test to ensure that there is at least 1 test in this directory
-func addFakeTest(path string, packageName string) string {
+func addFakes(path, packageName string) {
 	testFilename := createTestFilename(path)
-
 	createTestFile(packageName, testFilename)
 
-	return testFilename
+	codeFilename := createCodeFilename(path)
+	createCodeFile(packageName, codeFilename)
 }
 
-func addFakeCode(path string, packageName string) string {
+func removeFakes(path string) {
+	testFilename := createTestFilename(path)
+	utils.LogWhenVerbose("[coverage] remove fake test @ %s", testFilename)
+	err := os.Remove(testFilename)
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while removing fake test @ %s, err: %s", testFilename, err)
+	}
+
 	codeFilename := createCodeFilename(path)
-
-	createCodeFile(packageName, codeFilename)
-
-	return codeFilename
+	utils.LogWhenVerbose("[coverage] remove fake code @ %s", codeFilename)
+	err = os.Remove(codeFilename)
+	if err != nil {
+		utils.LogWhenVerbose("[coverage] error while removing fake code @ %s, err: %s", codeFilename, err)
+	}
 }
 
 func createTestFilename(path string) string {
@@ -179,16 +183,6 @@ func ThisCodeDoesntReallyDoAnything() {}
 	}
 }
 
-// remove a previously added fake file (i.e. clean up)
-func removeFakeFile(filename string) {
-	utils.LogWhenVerbose("[coverage] remove fake file @ %s", filename)
-
-	err := os.Remove(filename)
-	if err != nil {
-		utils.LogWhenVerbose("[coverage] error while removing fake file @ %s, err: %s", filename, err)
-	}
-}
-
 // essentially call `go test` to generate the coverage
 func execCoverage(dir string, quiet, race bool, tags string) error {
 	arguments := []string{
@@ -212,18 +206,23 @@ func execCoverage(dir string, quiet, race bool, tags string) error {
 		cmd.Stderr = os.Stderr
 	}
 
-	err := cmd.Run()
-
-	payload, _ := cmd.CombinedOutput()
-	utils.LogWhenVerbose("[coverage] test output %s:\n%s", dir, payload)
+	payload, err := cmd.CombinedOutput()
+	if err != nil {
+		utils.LogAlways("failed to get test command output. dir: %s err: %s", dir, err)
+	}
 
 	if err != nil {
+		utils.LogAlways("[coverage] test output %s:\n%s", dir, payload)
+
 		if err.Error() == "exit status 1" {
 			utils.LogAlways("WARNING: tests for %s are broken. err: %s", dir, err)
 		} else {
 			utils.LogAlways("[coverage] error while running go test %s. err: %s", dir, err)
 		}
+
 		return err
+	} else {
+		utils.LogWhenVerbose("[coverage] test output %s:\n%s", dir, payload)
 	}
 
 	utils.LogWhenVerbose("[coverage] created coverage file @ %s%s", dir, coverageFilename)
