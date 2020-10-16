@@ -57,7 +57,9 @@ func processAllDirs(basePath string, exclusionsMatcher *regexp.Regexp, logTag st
 func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bool, tags string) {
 	packageName := findPackageName(path)
 
-	addFakes(path, packageName)
+	if packageName != UnknownPackage {
+		addFakes(path, packageName)
+	}
 
 	err := execCoverage(path, quietMode, race, tags)
 	if err != nil {
@@ -72,8 +74,6 @@ func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bo
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error filtering files: %s", err)
 	}
-
-	re
 }
 
 func addFakes(path, packageName string) {
