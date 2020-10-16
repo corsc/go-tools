@@ -115,13 +115,6 @@ func (g *Generator) do(paths []string) {
 	}
 	close(jobsCh)
 
-	for _, path := range paths {
-		packageName := findPackageName(path)
-		if packageName != UnknownPackage {
-			removeFakes(path)
-		}
-	}
-
 	// wait until everything is done
 	wg.Wait()
 }

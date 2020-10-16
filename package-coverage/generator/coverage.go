@@ -59,15 +59,12 @@ func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bo
 
 	if packageName != UnknownPackage {
 		addFakes(path, packageName)
+		defer removeFakes(path)
 	}
 
 	err := execCoverage(path, quietMode, race, tags)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error generating coverage %s", err)
-	}
-
-	if exclusions == nil {
-		return
 	}
 
 	err = filterCoverage(filepath.Join(path, coverageFilename), exclusions)
@@ -80,8 +77,8 @@ func addFakes(path, packageName string) {
 	testFilename := createTestFilename(path)
 	createTestFile(packageName, testFilename)
 
-	codeFilename := createCodeFilename(path)
-	createCodeFile(packageName, codeFilename)
+	//codeFilename := createCodeFilename(path)
+	//createCodeFile(packageName, codeFilename)
 }
 
 func removeFakes(path string) {
@@ -92,12 +89,12 @@ func removeFakes(path string) {
 		utils.LogWhenVerbose("[coverage] error while removing fake test @ %s, err: %s", testFilename, err)
 	}
 
-	codeFilename := createCodeFilename(path)
-	utils.LogWhenVerbose("[coverage] remove fake code @ %s", codeFilename)
-	err = os.Remove(codeFilename)
-	if err != nil {
-		utils.LogWhenVerbose("[coverage] error while removing fake code @ %s, err: %s", codeFilename, err)
-	}
+	//codeFilename := createCodeFilename(path)
+	//utils.LogWhenVerbose("[coverage] remove fake code @ %s", codeFilename)
+	//err = os.Remove(codeFilename)
+	//if err != nil {
+	//	utils.LogWhenVerbose("[coverage] error while removing fake code @ %s, err: %s", codeFilename, err)
+	//}
 }
 
 func createTestFilename(path string) string {
