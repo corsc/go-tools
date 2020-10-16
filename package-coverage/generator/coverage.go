@@ -72,8 +72,6 @@ func generateCoverage(path string, exclusions *regexp.Regexp, quietMode, race bo
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error filtering files: %s", err)
 	}
-
-	re
 }
 
 func addFakes(path, packageName string) {
