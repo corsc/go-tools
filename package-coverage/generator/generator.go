@@ -109,14 +109,31 @@ func (g *Generator) do(paths []string) {
 		go doWorker(jobsCh, wg, g.Exclusion, g.QuietMode, g.Race, g.Tags)
 	}
 
-	// send the paths
+	// Add all the fake code
+	for _, path := range paths {
+		packageName := findPackageName(path)
+		if packageName != UnknownPackage {
+			addFakes(path, packageName)
+		}
+	}
+
+	// calculate coverage
 	for _, path := range paths {
 		jobsCh <- path
 	}
+
 	close(jobsCh)
 
 	// wait until everything is done
 	wg.Wait()
+
+	// remove the fake code
+	for _, path := range paths {
+		packageName := findPackageName(path)
+		if packageName != UnknownPackage {
+			removeFakes(path)
+		}
+	}
 }
 
 func doWorker(jobsCh <-chan string, wg *sync.WaitGroup, exclusion *regexp.Regexp, quietMode, race bool, tags string) {
