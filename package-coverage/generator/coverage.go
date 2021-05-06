@@ -107,11 +107,23 @@ func findPackageName(path string) string {
 		return UnknownPackage
 	}
 
-	for pkgName := range pkgs {
-		return pkgName
+	if len(pkgs) == 0 {
+		return UnknownPackage
 	}
 
-	return UnknownPackage
+	var out string
+
+	for pkgName := range pkgs {
+		out = pkgName
+
+		// attempt to skip any _test packages
+		if !strings.HasSuffix(pkgName, "_test") {
+			return pkgName
+		}
+	}
+
+	// use the only value
+	return out
 }
 
 // create a fake test so that all directories are guaranteed to contain tests (and therefore coverage will be generated)
