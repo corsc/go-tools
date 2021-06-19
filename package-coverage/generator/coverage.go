@@ -175,7 +175,7 @@ func createCodeFile(packageName string, codeFilename string) {
 
 	_, err = file.WriteString(`package ` + packageName + `
 
-func ThisCodeDoesntReallyDoAnything() {}
+func thisCodeDoesntReallyDoAnything() {}
 `)
 	if err != nil {
 		utils.LogWhenVerbose("[coverage] error while writing code file %s", err)
