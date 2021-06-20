@@ -32,7 +32,6 @@ func main() {
 			fmt.Printf("Error: %s\n", r)
 		}
 	}()
-	fmt.Println("debug log")
 
 	// get config and environment
 	cfg := config.GetConfig()
