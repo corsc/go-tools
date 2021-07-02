@@ -57,7 +57,7 @@ func PrintCoverageSingle(writer io.Writer, path string, minCoverage int, prefix 
 func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPackage, minCoverage float64, prefix string, depth int) bool {
 	addLine(writer)
 	fmt.Fprintf(writer, header1Template, "")
-	fmt.Fprintf(writer, header2Template, "Cov%", "Stmts", "Cov%", "Stmts", "Package")
+	fmt.Fprintf(writer, header2Template, "Cov%", "Cov", "Stmts", "Cov%", "Cov", "Stmts", "Package")
 	addLine(writer)
 
 	coverageOk := true
@@ -92,22 +92,22 @@ func addLine(writer io.Writer) {
 }
 
 const (
-	header1Template = "|      Branch     |       Dir       | %-80s |\n"
-	header2Template = "| %6s | %6s | %6s | %6s | %-80s |\n"
-	lineTemplate    = "| %6.2f | %6.0f | %6.2f | %6.0f | %-80s |\n"
+	header1Template = "|         Branch        |          Dir          | %-80s |\n"
+	header2Template = "| %6s | %6s | %6s | %6s | %6s | %6s | %-80s |\n"
+	lineTemplate    = "| %6.2f | %6.0f | %6.0f | %6.2f | %6.0f | %6.0f | %-80s |\n"
 	errStart        = "\033[1;31m"
 	errEnd          = "\033[0m"
 )
 
 func addLinePrint(writer io.Writer, pkgFormatted string, cover *coverage, minCoverage float64) bool {
-	sumCoverage, sumStmts := getSummaryValues(cover)
-	selfCoverage, selfStmts := getSelfValues(cover)
+	precCov, sumCoverage, sumStmts := getSummaryValues(cover)
+	precSelf, selfCoverage, selfStmts := getSelfValues(cover)
 
 	if sumCoverage < minCoverage {
-		fmt.Fprintf(writer, errStart+lineTemplate+errEnd, sumCoverage, sumStmts, selfCoverage, selfStmts, pkgFormatted)
+		fmt.Fprintf(writer, errStart+lineTemplate+errEnd, precCov, sumCoverage, sumStmts, precSelf, selfCoverage, selfStmts, pkgFormatted)
 		return false
 	}
 
-	fmt.Fprintf(writer, lineTemplate, sumCoverage, sumStmts, selfCoverage, selfStmts, pkgFormatted)
+	fmt.Fprintf(writer, lineTemplate, precCov, sumCoverage, sumStmts, precSelf, selfCoverage, selfStmts, pkgFormatted)
 	return true
 }
