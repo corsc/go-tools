@@ -51,7 +51,7 @@ func TestAddLinePrint(t *testing.T) {
 	result := addLinePrint(buffer, pkgFormatted, cover, minCoverage)
 	assert.True(t, result)
 
-	expected := "| 100.00 |      0 | 100.00 |      0 | test                                                                             |\n"
+	expected := "| 100.00 |      0 |      0 | 100.00 |      0 |      0 | test                                                                             |\n"
 	assert.Equal(t, expected, buffer.String())
 
 	buffer = &bytes.Buffer{}
@@ -65,7 +65,7 @@ func TestAddLinePrint(t *testing.T) {
 	result = addLinePrint(buffer, pkgFormatted, cover, minCoverage)
 	assert.True(t, result)
 
-	expected = "|   0.00 |     20 |   0.00 |     10 | test                                                                             |\n"
+	expected = "|   0.00 |      0 |     20 |   0.00 |      0 |     10 | test                                                                             |\n"
 	assert.Equal(t, expected, buffer.String())
 }
 
