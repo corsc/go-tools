@@ -24,6 +24,14 @@ import (
 	"github.com/corsc/go-tools/package-coverage/utils"
 )
 
+const (
+	header1Template   = "| %-24s | %-24s | %-80s |\n"
+	header2Template   = "| %6s | %6s | %6s | %6s | %6s | %6s | %-80s |\n"
+	lineTemplate      = "| %6.2f | %6.0f | %6.0f | %6.2f | %6.0f | %6.0f | %-80s |\n"
+	errHighlightStart = "\033[1;31m"
+	errHighlightEnd   = "\033[0m"
+)
+
 // CoverageByPackage contains the result of parsing one or more package's coverage file
 type coverageByPackage map[string]*coverage
 
@@ -56,8 +64,8 @@ func PrintCoverageSingle(writer io.Writer, path string, minCoverage int, prefix 
 
 func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPackage, minCoverage float64, prefix string, depth int) bool {
 	addLine(writer)
-	fmt.Fprintf(writer, header1Template, "")
-	fmt.Fprintf(writer, header2Template, "Cov%", "Cov", "Stmts", "Cov%", "Cov", "Stmts", "Package")
+	_, _ = fmt.Fprintf(writer, header1Template, "Branch", "Dir", "")
+	_, _ = fmt.Fprintf(writer, header2Template, "Cov%", "Cov", "Stmts", "Cov%", "Cov", "Stmts", "Package")
 	addLine(writer)
 
 	coverageOk := true
@@ -85,29 +93,25 @@ func printCoverage(writer io.Writer, pkgs []string, coverageData coverageByPacka
 }
 
 func addLine(writer io.Writer) {
-	for x := 0; x < 120; x++ {
-		fmt.Fprint(writer, "-")
+	for x := 0; x < 138; x++ {
+		_, _ = fmt.Fprint(writer, "-")
 	}
-	fmt.Fprint(writer, "\n")
+	_, _ = fmt.Fprint(writer, "\n")
 }
 
-const (
-	header1Template = "|         Branch        |          Dir          | %-80s |\n"
-	header2Template = "| %6s | %6s | %6s | %6s | %6s | %6s | %-80s |\n"
-	lineTemplate    = "| %6.2f | %6.0f | %6.0f | %6.2f | %6.0f | %6.0f | %-80s |\n"
-	errStart        = "\033[1;31m"
-	errEnd          = "\033[0m"
-)
-
 func addLinePrint(writer io.Writer, pkgFormatted string, cover *coverage, minCoverage float64) bool {
-	precCov, sumCoverage, sumStmts := getSummaryValues(cover)
-	precSelf, selfCoverage, selfStmts := getSelfValues(cover)
+	sumPercentCovered, sumStmtsCovered, sumStmts := getSummaryValues(cover)
+	selfPercentCovered, selfStmtsCovered, selfStmts := getSelfValues(cover)
 
-	if sumCoverage < minCoverage {
-		fmt.Fprintf(writer, errStart+lineTemplate+errEnd, precCov, sumCoverage, sumStmts, precSelf, selfCoverage, selfStmts, pkgFormatted)
-		return false
+	template := lineTemplate
+	result := true
+
+	if sumPercentCovered < minCoverage {
+		template = errHighlightStart + lineTemplate + errHighlightEnd
+		result = false
 	}
 
-	fmt.Fprintf(writer, lineTemplate, precCov, sumCoverage, sumStmts, precSelf, selfCoverage, selfStmts, pkgFormatted)
-	return true
+	_, _ = fmt.Fprintf(writer, template, sumPercentCovered, sumStmtsCovered, sumStmts, selfPercentCovered, selfStmtsCovered, selfStmts, pkgFormatted)
+
+	return result
 }

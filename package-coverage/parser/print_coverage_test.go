@@ -35,38 +35,22 @@ func TestCalculateCoverage(t *testing.T) {
 	result := getCoverageByPackage(sampleCoverageFileContents)
 	converted := map[string]*coverage(result)
 	assert.Equal(t, expected, converted)
-}
 
-func TestAddLinePrint(t *testing.T) {
+	pkgs := []string{"github.com/corsc/go-tools/package-coverage/"}
+
 	buffer := &bytes.Buffer{}
-	pkgFormatted := "test"
-	cover := &coverage{
-		selfStatements:  0,
-		selfCovered:     0,
-		childStatements: 0,
-		childCovered:    0,
-	}
-	minCoverage := float64(0)
+	_, _  = buffer.Write([]byte("\n"))
 
-	result := addLinePrint(buffer, pkgFormatted, cover, minCoverage)
-	assert.True(t, result)
-
-	expected := "| 100.00 |      0 |      0 | 100.00 |      0 |      0 | test                                                                             |\n"
-	assert.Equal(t, expected, buffer.String())
-
-	buffer = &bytes.Buffer{}
-	cover = &coverage{
-		selfStatements:  10,
-		selfCovered:     0,
-		childStatements: 10,
-		childCovered:    0,
-	}
-
-	result = addLinePrint(buffer, pkgFormatted, cover, minCoverage)
-	assert.True(t, result)
-
-	expected = "|   0.00 |      0 |     20 |   0.00 |      0 |     10 | test                                                                             |\n"
-	assert.Equal(t, expected, buffer.String())
+	printCoverage(buffer, pkgs, converted, 60, "", 0)
+	expectedOutput := `
+------------------------------------------------------------------------------------------------------------------------------------------
+| Branch                   | Dir                      |                                                                                  |
+|   Cov% |    Cov |  Stmts |   Cov% |    Cov |  Stmts | Package                                                                          |
+------------------------------------------------------------------------------------------------------------------------------------------
+|  63.22 |     55 |     87 |  63.22 |     55 |     87 | github.com/corsc/go-tools/package-coverage/                                      |
+------------------------------------------------------------------------------------------------------------------------------------------
+`
+	assert.Equal(t, expectedOutput, buffer.String())
 }
 
 var sampleCoverageFileContents = `
