@@ -73,26 +73,30 @@ func getSortedPackages(coverageData coverageByPackage) []string {
 	return output
 }
 
-func getSummaryValues(cover *coverage) (float64, float64) {
+func getSummaryValues(cover *coverage) (float64, float64, float64) {
 	stmts := float64(cover.selfStatements + cover.childStatements)
 	stmtsCovered := float64(cover.selfCovered + cover.childCovered)
 
-	return getValues(stmts, stmtsCovered)
+	percentCovered := getPercentage(stmts, stmtsCovered)
+
+	return percentCovered, stmtsCovered, stmts
 }
 
-func getSelfValues(cover *coverage) (float64, float64) {
+func getSelfValues(cover *coverage) (float64, float64, float64) {
 	stmts := float64(cover.selfStatements)
 	stmtsCovered := float64(cover.selfCovered)
 
-	return getValues(stmts, stmtsCovered)
+	percentCovered := getPercentage(stmts, stmtsCovered)
+
+	return percentCovered, stmtsCovered, stmts
 }
 
-func getValues(stmts float64, stmtsCovered float64) (float64, float64) {
+func getPercentage(stmts, stmtsCovered float64) float64 {
 	if stmts <= 0.0 {
-		return 100, 0
+		return 100
 	}
 
 	covered := (stmtsCovered / stmts) * 100
 
-	return covered, stmts
+	return covered
 }
