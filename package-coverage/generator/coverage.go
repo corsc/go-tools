@@ -200,7 +200,7 @@ func execCoverage(dir string, quiet, race bool, tags string) error {
 	}
 
 	if len(tags) > 0 {
-		arguments = append(arguments, `-tags="`+tags+`"`)
+		arguments = append(arguments, `-tags='`+tags+`'`)
 	}
 
 	cmd := exec.Command("go", arguments...)
