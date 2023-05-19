@@ -37,11 +37,12 @@ func Calculate(cfg *config.Config, path string, exclusions *regexp.Regexp) {
 	if cfg.SingleDir {
 		generatorDo = &SingleDirGenerator{
 			Generator: Generator{
-				BasePath:  path,
-				Exclusion: exclusions,
-				QuietMode: cfg.Quiet,
-				Race:      cfg.Race,
-				Tags:      cfg.Tags,
+				BasePath:    path,
+				Exclusion:   exclusions,
+				QuietMode:   cfg.Quiet,
+				Race:        cfg.Race,
+				Tags:        cfg.Tags,
+				Concurrency: 1,
 			},
 		}
 	} else {
